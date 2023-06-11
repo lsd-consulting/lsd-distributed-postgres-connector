@@ -1,0 +1,14 @@
+dependencies {
+    // DB
+    implementation 'com.zaxxer:HikariCP:5.0.1'
+    implementation 'org.postgresql:postgresql:42.6.0'
+
+    // LSD
+    api 'io.github.lsd-consulting:lsd-distributed-data-access:1.0.4'
+
+    // Spring
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:2.7.10'
+
+    // Other
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+}

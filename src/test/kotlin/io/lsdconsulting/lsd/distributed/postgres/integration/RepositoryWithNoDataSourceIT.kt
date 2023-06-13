@@ -1,12 +1,12 @@
 package io.lsdconsulting.lsd.distributed.postgres.integration
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import io.lsdconsulting.lsd.distributed.access.model.InteractionType
 import io.lsdconsulting.lsd.distributed.access.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplication
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.repository.TestRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.apache.commons.lang3.RandomUtils.nextInt
 import org.apache.commons.lang3.RandomUtils.nextLong
@@ -14,6 +14,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.http.HttpMethod
@@ -21,30 +22,28 @@ import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import java.time.ZoneId
 import java.time.ZonedDateTime.now
-import javax.sql.DataSource
 
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
-@ActiveProfiles("test")
-@AutoConfigureEmbeddedDatabase(
-    provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY,
-    refresh = AutoConfigureEmbeddedDatabase.RefreshMode.AFTER_EACH_TEST_METHOD,
-    type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES
-)
-internal class InterceptedDocumentPostgresRepositoryIT {
+@ActiveProfiles("lsd-datasource")
+//@Disabled
+internal class RepositoryWithNoDataSourceIT {
 
     @Autowired
     private lateinit var testRepository: TestRepository
 
-    @Autowired
-    private lateinit var dataSource: DataSource
+    @Value("\${lsd.dist.connectionString}")
+    private lateinit var dbConnectionString: String
 
+    @Autowired
     private lateinit var underTest: InterceptedDocumentPostgresRepository
 
     @BeforeEach
     fun setup() {
-        testRepository.createTable(dataSource)
-        underTest = InterceptedDocumentPostgresRepository(dataSource, ObjectMapper(), true)
+        val config = HikariConfig()
+        config.jdbcUrl = dbConnectionString
+        config.driverClassName = "org.postgresql.Driver"
+        testRepository.createTable(HikariDataSource(config))
     }
 
     @Test
@@ -58,13 +57,13 @@ internal class InterceptedDocumentPostgresRepositoryIT {
             httpMethod = "GET",
             body = "body",
             interactionType = InteractionType.REQUEST,
-            traceId = "traceId",
+            traceId = randomAlphanumeric(6),
             createdAt = now(ZoneId.of("UTC"))
         )
 
         underTest.save(interceptedInteraction)
 
-        val result = underTest.findByTraceIds("traceId")
+        val result = underTest.findByTraceIds(interceptedInteraction.traceId)
         assertThat(result, hasSize(1))
         assertThat(result[0].elapsedTime, `is`(20L))
         assertThat(result[0].httpStatus, `is`("OK"))

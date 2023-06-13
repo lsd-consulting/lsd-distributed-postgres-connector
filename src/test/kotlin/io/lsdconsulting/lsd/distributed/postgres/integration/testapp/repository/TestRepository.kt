@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component
 import javax.sql.DataSource
 
 private const val PREPARE_DATABASE = """
-    CREATE SCHEMA lsd;
+    CREATE SCHEMA IF NOT EXISTS lsd;
     CREATE TABLE IF NOT EXISTS lsd.intercepted_interactions (
     id integer PRIMARY KEY generated always as identity, 
     trace_id VARCHAR(30), 

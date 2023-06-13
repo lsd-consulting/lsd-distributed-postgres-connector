@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: abc123
+
+  postgres-db-create:
+    image: postgres:14
+    container_name: postgres-db-create
+    command: sh -c '/usr/bin/psql --host postgres --username postgres --no-password --command "CREATE DATABASE lsd_database;"'
+    environment:
+      PGPASSWORD: abc123
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  healthy_postgres:
+    image: busybox
+    restart: "no"
+    container_name: postgres_health_checker
+    depends_on:
+      postgres-db-create:
+        condition: service_started

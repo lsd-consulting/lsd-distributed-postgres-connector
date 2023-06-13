@@ -2,6 +2,9 @@ package io.lsdconsulting.lsd.distributed.postgres.repository
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import com.zaxxer.hikari.pool.HikariPool
 import io.lsdconsulting.lsd.distributed.access.model.InteractionType
 import io.lsdconsulting.lsd.distributed.access.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.access.repository.InterceptedDocumentRepository
@@ -12,36 +15,47 @@ import java.time.ZonedDateTime
 import javax.sql.DataSource
 
 
-private const val QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT = "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?) order by o.created_at"
-private const val QUERY_BY_TRACE_IDS = "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?)"
-private const val INSERT_QUERY = "insert into lsd.intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+private const val QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT =
+    "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?) order by o.created_at"
+private const val QUERY_BY_TRACE_IDS =
+    "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?)"
+private const val INSERT_QUERY =
+    "insert into lsd.intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-class InterceptedDocumentPostgresRepository(
-    private val dataSource: DataSource,
-    private val objectMapper: ObjectMapper,
-    failOnConnectionError: Boolean = false
-) : InterceptedDocumentRepository {
+class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
+    private var active: Boolean = true
+    private var dataSource: DataSource?
+    private var objectMapper: ObjectMapper
 
-    private var active: Boolean = false
+    constructor(
+        dataSource: DataSource,
+        objectMapper: ObjectMapper
+    ) {
+        this.dataSource = dataSource
+        this.objectMapper = objectMapper
+    }
 
-    init {
+    constructor(dbConnectionString: String, objectMapper: ObjectMapper, failOnConnectionError: Boolean = false) {
+        val config = HikariConfig()
+        config.jdbcUrl = dbConnectionString
+        config.driverClassName = "org.postgresql.Driver"
+        this.dataSource = createDataSource(config, failOnConnectionError)
+        this.objectMapper = objectMapper
+    }
+
+    private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean):DataSource? = try {
+        HikariDataSource(config)
+    } catch (e: HikariPool.PoolInitializationException) {
         if (failOnConnectionError) {
-            dataSource.connection.use { con ->
-                val prepareStatement = con.prepareStatement("SELECT 1")
-                prepareStatement.use { pst ->
-                    pst.executeQuery().use { rs ->
-                        if (rs.next()) {
-                            active = true
-                        }
-                    }
-                }
-            }
-        } else active = true
+            throw e
+        }
+        active = false
+        null
     }
 
     override fun save(interceptedInteraction: InterceptedInteraction) {
         if (isActive()) {
-            dataSource.connection.use { con ->
+            dataSource!!.connection.use { con ->
                 con.prepareStatement(INSERT_QUERY).use { pst ->
                     pst.setString(1, interceptedInteraction.traceId)
                     pst.setString(2, interceptedInteraction.body)
@@ -68,7 +82,7 @@ class InterceptedDocumentPostgresRepository(
         if (isActive()) {
             val startTime = System.currentTimeMillis()
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
-            dataSource.connection.use { con ->
+            dataSource!!.connection.use { con ->
                 val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT)
                 prepareStatement.setArray(1, con.createArrayOf("text", traceId))
                 prepareStatement.use { pst ->
@@ -90,7 +104,7 @@ class InterceptedDocumentPostgresRepository(
         if (isActive()) {
             val startTime = System.currentTimeMillis()
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
-            dataSource.connection.use { con ->
+            dataSource!!.connection.use { con ->
                 val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS)
                 prepareStatement.setArray(1, con.createArrayOf("text", traceId))
                 prepareStatement.use { pst ->
@@ -126,6 +140,6 @@ class InterceptedDocumentPostgresRepository(
     )
 
     override fun isActive() = active.also {
-        log().warn("The LSD Postgres repository is disabled!")
+        if (!it) log().warn("The LSD Postgres repository is disabled!")
     }
 }

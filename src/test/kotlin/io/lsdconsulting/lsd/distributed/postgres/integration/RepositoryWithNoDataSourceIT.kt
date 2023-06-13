@@ -26,7 +26,7 @@ import java.time.ZonedDateTime.now
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
 @ActiveProfiles("lsd-datasource")
-//@Disabled
+@Disabled // This test only works with a real instance of the db, eg. in Docker
 internal class RepositoryWithNoDataSourceIT {
 
     @Autowired

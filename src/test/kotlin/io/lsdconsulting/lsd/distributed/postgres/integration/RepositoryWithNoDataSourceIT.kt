@@ -2,8 +2,8 @@ package io.lsdconsulting.lsd.distributed.postgres.integration
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import io.lsdconsulting.lsd.distributed.access.model.InteractionType
-import io.lsdconsulting.lsd.distributed.access.model.InterceptedInteraction
+import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
+import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplication
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.repository.TestRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository

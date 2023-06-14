@@ -6,21 +6,21 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.pool.HikariPool
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
+import io.lsdconsulting.lsd.distributed.connector.model.InterceptedFlow
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
-import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentRepository
+import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.config.log
 import java.sql.ResultSet
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import javax.sql.DataSource
 
+private const val QUERY_BY_TRACE_IDS =
+    "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?)"
+private const val QUERY_FOR_RECENT_UNIQUE_TRACE_IDS =
+    "select distinct trace_id from lsd.intercepted_interactions order by created_at limit (?)"
 
-private const val QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT =
-    "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?) order by o.created_at"
-private const val INSERT_QUERY =
-    "insert into lsd.intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-
-class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
+class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepository {
     private var active: Boolean = true
     private var dataSource: DataSource?
     private var objectMapper: ObjectMapper
@@ -41,7 +41,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         this.objectMapper = objectMapper
     }
 
-    private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean):DataSource? = try {
+    private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean): DataSource? = try {
         HikariDataSource(config)
     } catch (e: HikariPool.PoolInitializationException) {
         if (failOnConnectionError) {
@@ -51,38 +51,46 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         null
     }
 
-    override fun save(interceptedInteraction: InterceptedInteraction) {
-        if (isActive()) {
-            dataSource!!.connection.use { con ->
-                con.prepareStatement(INSERT_QUERY).use { pst ->
-                    pst.setString(1, interceptedInteraction.traceId)
-                    pst.setString(2, interceptedInteraction.body)
-                    pst.setString(3, objectMapper.writeValueAsString(interceptedInteraction.requestHeaders))
-                    pst.setString(4, objectMapper.writeValueAsString(interceptedInteraction.responseHeaders))
-                    pst.setString(5, interceptedInteraction.serviceName)
-                    pst.setString(6, interceptedInteraction.target)
-                    pst.setString(7, interceptedInteraction.path)
-                    pst.setString(8, interceptedInteraction.httpStatus)
-                    pst.setString(9, interceptedInteraction.httpMethod)
-                    pst.setString(10, interceptedInteraction.interactionType.name)
-                    pst.setString(11, interceptedInteraction.profile)
-                    pst.setLong(12, interceptedInteraction.elapsedTime)
-                    pst.setObject(13, interceptedInteraction.createdAt.toOffsetDateTime())
-                    pst.executeUpdate()
+    private val typeReference = object : TypeReference<Map<String, Collection<String>>>() {}
+
+    override fun findRecentFlows(resultSizeLimit: Int): List<InterceptedFlow> {
+        val distinctTraceIds = findRecentTraceIds(resultSizeLimit)
+        val interactionsGroupedByTraceId = findByTraceIdsUnsorted(distinctTraceIds).groupBy { it.traceId }
+
+        return distinctTraceIds
+            .map {
+                interactionsGroupedByTraceId[it]!! // This is necessary to ensure the order set in distinctTraceIds
+            }.map {
+                InterceptedFlow(
+                    initialInteraction = it.minBy { x -> x.createdAt },
+                    finalInteraction = it.maxBy { x -> x.createdAt },
+                    totalCapturedInteractions = it.size
+                )
+            }
+    }
+
+    private fun findRecentTraceIds(resultSizeLimit: Int): MutableList<String> {
+        val traceIds: MutableList<String> = mutableListOf()
+        dataSource!!.connection.use { con ->
+            val prepareStatement = con.prepareStatement(QUERY_FOR_RECENT_UNIQUE_TRACE_IDS)
+            prepareStatement.setInt(1, resultSizeLimit)
+            prepareStatement.use { pst ->
+                pst.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        traceIds.add(rs.getString("trace_id"))
+                    }
                 }
             }
         }
+        return traceIds
     }
 
-    private val typeReference = object : TypeReference<Map<String, Collection<String>>>() {}
-
-    override fun findByTraceIds(vararg traceId: String): List<InterceptedInteraction> {
-        if (isActive()) {
+    private fun findByTraceIdsUnsorted(traceId: List<String>): List<InterceptedInteraction> {
             val startTime = System.currentTimeMillis()
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
             dataSource!!.connection.use { con ->
-                val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT)
-                prepareStatement.setArray(1, con.createArrayOf("text", traceId))
+                val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS)
+                prepareStatement.setArray(1, con.createArrayOf("text", traceId.toTypedArray()))
                 prepareStatement.use { pst ->
                     pst.executeQuery().use { rs ->
                         while (rs.next()) {
@@ -94,8 +102,6 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
             }
             log().trace("findByTraceIds took {} ms", System.currentTimeMillis() - startTime)
             return interceptedInteractions
-        }
-        return listOf()
     }
 
     private fun mapResult(rs: ResultSet): InterceptedInteraction = InterceptedInteraction(
@@ -114,8 +120,4 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         createdAt = ZonedDateTime.parse(rs.getString("created_at").replace(" ", "T"))
             .withZoneSameInstant(ZoneId.of("UTC")),
     )
-
-    override fun isActive() = active.also {
-        if (!it) log().warn("The LSD Postgres repository is disabled!")
-    }
 }

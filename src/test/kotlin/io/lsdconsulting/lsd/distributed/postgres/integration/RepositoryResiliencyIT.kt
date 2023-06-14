@@ -1,7 +1,7 @@
 package io.lsdconsulting.lsd.distributed.postgres.integration
 
-import io.lsdconsulting.lsd.distributed.access.model.InteractionType
-import io.lsdconsulting.lsd.distributed.access.model.InterceptedInteraction
+import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
+import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplication
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric

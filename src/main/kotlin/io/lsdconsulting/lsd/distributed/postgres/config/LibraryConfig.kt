@@ -43,7 +43,7 @@ open class LibraryConfig {
     ) = InterceptedDocumentPostgresAdminRepository(dbConnectionString, objectMapper, failOnConnectionError)
 
     @Bean
-    @ConditionalOnBean(value = [DataSource::class])
+    @ConditionalOnBean(name = ["dataSource"])
     @ConditionalOnMissingBean(value = [InterceptedDocumentPostgresAdminRepository::class])
     open fun interceptedDocumentAdminRepositoryFromDataSource(
         dataSource: DataSource,

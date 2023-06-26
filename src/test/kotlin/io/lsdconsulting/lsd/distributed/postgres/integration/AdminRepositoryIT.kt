@@ -7,7 +7,6 @@ import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplica
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.repository.TestRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.apache.commons.lang3.RandomUtils
 import org.apache.commons.lang3.RandomUtils.nextInt
@@ -28,11 +27,6 @@ import javax.sql.DataSource
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
 @ActiveProfiles("spring-datasource")
-@AutoConfigureEmbeddedDatabase(
-    provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY,
-    refresh = AutoConfigureEmbeddedDatabase.RefreshMode.AFTER_EACH_TEST_METHOD,
-    type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES
-)
 internal class AdminRepositoryIT {
 
     @Autowired

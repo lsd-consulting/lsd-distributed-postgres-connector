@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.ApplicationContext
@@ -24,15 +24,13 @@ open class LibraryConfig {
     ) = InterceptedDocumentPostgresRepository(dbConnectionString, objectMapper, failOnConnectionError)
 
     @Bean
-    @ConditionalOnBean(value = [DataSource::class])
-    @ConditionalOnMissingBean(value = [InterceptedDocumentPostgresRepository::class])
+    @ConditionalOnClass(DataSource::class)
+    @ConditionalOnMissingBean
     open fun interceptedDocumentRepositoryFromDataSource(
         dataSource: DataSource,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-    ): InterceptedDocumentPostgresRepository {
-        return InterceptedDocumentPostgresRepository(dataSource, objectMapper)
-    }
+    ) = InterceptedDocumentPostgresRepository(dataSource, objectMapper)
 
     @Bean
     @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('jdbc:postgresql://')}")
@@ -43,15 +41,12 @@ open class LibraryConfig {
     ) = InterceptedDocumentPostgresAdminRepository(dbConnectionString, objectMapper, failOnConnectionError)
 
     @Bean
-    @ConditionalOnBean(name = ["dataSource"])
-    @ConditionalOnMissingBean(value = [InterceptedDocumentPostgresAdminRepository::class])
+    @ConditionalOnClass(DataSource::class)
+    @ConditionalOnMissingBean
     open fun interceptedDocumentAdminRepositoryFromDataSource(
         dataSource: DataSource,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
         applicationContext: ApplicationContext,
-    ): InterceptedDocumentPostgresAdminRepository {
-        log().info("Instantiating InterceptedDocumentPostgresAdminRepository")
-        return InterceptedDocumentPostgresAdminRepository(dataSource, objectMapper)
-    }
+    ) = InterceptedDocumentPostgresAdminRepository(dataSource, objectMapper)
 }

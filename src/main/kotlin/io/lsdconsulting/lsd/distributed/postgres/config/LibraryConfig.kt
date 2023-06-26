@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import javax.sql.DataSource
@@ -29,7 +30,9 @@ open class LibraryConfig {
         dataSource: DataSource,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-    ) = InterceptedDocumentPostgresRepository(dataSource, objectMapper)
+    ): InterceptedDocumentPostgresRepository {
+        return InterceptedDocumentPostgresRepository(dataSource, objectMapper)
+    }
 
     @Bean
     @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('jdbc:postgresql://')}")
@@ -46,5 +49,9 @@ open class LibraryConfig {
         dataSource: DataSource,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-    ) = InterceptedDocumentPostgresAdminRepository(dataSource, objectMapper)
+        applicationContext: ApplicationContext,
+    ): InterceptedDocumentPostgresAdminRepository {
+        log().info("Instantiating InterceptedDocumentPostgresAdminRepository")
+        return InterceptedDocumentPostgresAdminRepository(dataSource, objectMapper)
+    }
 }

@@ -18,7 +18,7 @@ import javax.sql.DataSource
 private const val QUERY_BY_TRACE_IDS =
     "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?)"
 private const val QUERY_FOR_RECENT_UNIQUE_TRACE_IDS =
-    "select distinct trace_id from lsd.intercepted_interactions order by created_at limit (?)"
+    "select m.trace_id from (select trace_id, max(created_at) c from lsd.intercepted_interactions group by trace_id order by c desc limit (?)) m limit (?)"
 
 class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepository {
     private var active: Boolean = true
@@ -73,7 +73,8 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
         val traceIds: MutableList<String> = mutableListOf()
         dataSource!!.connection.use { con ->
             val prepareStatement = con.prepareStatement(QUERY_FOR_RECENT_UNIQUE_TRACE_IDS)
-            prepareStatement.setInt(1, resultSizeLimit)
+            prepareStatement.setInt(1, resultSizeLimit * 1000)
+            prepareStatement.setInt(2, resultSizeLimit)
             prepareStatement.use { pst ->
                 pst.executeQuery().use { rs ->
                     while (rs.next()) {

@@ -1,17 +1,12 @@
 package io.lsdconsulting.lsd.distributed.postgres.repository
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.pool.HikariPool
-import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentRepository
 import io.lsdconsulting.lsd.distributed.postgres.config.log
-import java.sql.ResultSet
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import javax.sql.DataSource
 
 
@@ -74,8 +69,6 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         }
     }
 
-    private val typeReference = object : TypeReference<Map<String, Collection<String>>>() {}
-
     override fun findByTraceIds(vararg traceId: String): List<InterceptedInteraction> {
         if (isActive()) {
             val startTime = System.currentTimeMillis()
@@ -86,7 +79,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
                 prepareStatement.use { pst ->
                     pst.executeQuery().use { rs ->
                         while (rs.next()) {
-                            val interceptedInteraction = mapResult(rs)
+                            val interceptedInteraction = rs.toInterceptedInteraction(objectMapper)
                             interceptedInteractions.add(interceptedInteraction)
                         }
                     }
@@ -97,23 +90,6 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         }
         return listOf()
     }
-
-    private fun mapResult(rs: ResultSet): InterceptedInteraction = InterceptedInteraction(
-        traceId = rs.getString("trace_id"),
-        body = rs.getString("body"),
-        requestHeaders = objectMapper.readValue(rs.getString("request_headers"), typeReference),
-        responseHeaders = objectMapper.readValue(rs.getString("response_headers"), typeReference),
-        serviceName = rs.getString("service_name"),
-        target = rs.getString("target"),
-        path = rs.getString("path"),
-        httpStatus = rs.getString("http_status"),
-        httpMethod = rs.getString("http_method"),
-        interactionType = InteractionType.valueOf(rs.getString("interaction_type")),
-        profile = rs.getString("profile"),
-        elapsedTime = rs.getLong("elapsed_time"),
-        createdAt = ZonedDateTime.parse(rs.getString("created_at").replace(" ", "T"))
-            .withZoneSameInstant(ZoneId.of("UTC")),
-    )
 
     override fun isActive() = active.also {
         if (!it) log().warn("The LSD Postgres repository is disabled!")

@@ -1,18 +1,13 @@
 package io.lsdconsulting.lsd.distributed.postgres.repository
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.pool.HikariPool
-import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedFlow
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.config.log
-import java.sql.ResultSet
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import javax.sql.DataSource
 
 private const val QUERY_BY_TRACE_IDS =
@@ -50,8 +45,6 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
         active = false
         null
     }
-
-    private val typeReference = object : TypeReference<Map<String, Collection<String>>>() {}
 
     override fun findRecentFlows(resultSizeLimit: Int): List<InterceptedFlow> {
         val distinctTraceIds = findRecentTraceIds(resultSizeLimit)
@@ -95,7 +88,7 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
                 prepareStatement.use { pst ->
                     pst.executeQuery().use { rs ->
                         while (rs.next()) {
-                            val interceptedInteraction = mapResult(rs)
+                            val interceptedInteraction = rs.toInterceptedInteraction(objectMapper)
                             interceptedInteractions.add(interceptedInteraction)
                         }
                     }
@@ -104,21 +97,4 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
             log().trace("findByTraceIds took {} ms", System.currentTimeMillis() - startTime)
             return interceptedInteractions
     }
-
-    private fun mapResult(rs: ResultSet): InterceptedInteraction = InterceptedInteraction(
-        traceId = rs.getString("trace_id"),
-        body = rs.getString("body"),
-        requestHeaders = objectMapper.readValue(rs.getString("request_headers"), typeReference),
-        responseHeaders = objectMapper.readValue(rs.getString("response_headers"), typeReference),
-        serviceName = rs.getString("service_name"),
-        target = rs.getString("target"),
-        path = rs.getString("path"),
-        httpStatus = rs.getString("http_status"),
-        httpMethod = rs.getString("http_method"),
-        interactionType = InteractionType.valueOf(rs.getString("interaction_type")),
-        profile = rs.getString("profile"),
-        elapsedTime = rs.getLong("elapsed_time"),
-        createdAt = ZonedDateTime.parse(rs.getString("created_at").replace(" ", "T"))
-            .withZoneSameInstant(ZoneId.of("UTC")),
-    )
 }

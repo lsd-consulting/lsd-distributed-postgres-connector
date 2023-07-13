@@ -18,6 +18,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
       - uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: build-directory
           path: build

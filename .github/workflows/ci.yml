@@ -9,11 +9,10 @@ jobs:
   build:
     strategy:
       matrix:
-        gradle-version: [6.3]
-        docker-version: [19.09]
+        docker-version: ["20.10"]
         docker-channel: [stable]
-        os: [ubuntu-latest]
-    runs-on: ubuntu-latest
+        os: [macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Update
         run: sudo apt-get update -yqq --fix-missing

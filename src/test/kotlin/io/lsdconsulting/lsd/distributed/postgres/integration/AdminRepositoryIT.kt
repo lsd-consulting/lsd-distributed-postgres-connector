@@ -219,7 +219,7 @@ internal class AdminRepositoryIT {
     )
 
     companion object {
-        private var postgreSQLContainer: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:13-alpine")
+        private var postgreSQLContainer: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:15.3-alpine3.18")
             .withDatabaseName("lsd_database")
             .withUsername("sa")
             .withPassword("sa")

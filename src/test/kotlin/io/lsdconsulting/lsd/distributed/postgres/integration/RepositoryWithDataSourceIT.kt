@@ -1,11 +1,14 @@
 package io.lsdconsulting.lsd.distributed.postgres.integration
 
+import com.github.dockerjava.api.model.ExposedPort
+import com.github.dockerjava.api.model.HostConfig
+import com.github.dockerjava.api.model.PortBinding
+import com.github.dockerjava.api.model.Ports
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplication
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.repository.TestRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.apache.commons.lang3.RandomUtils.nextInt
 import org.apache.commons.lang3.RandomUtils.nextLong
@@ -18,18 +21,13 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
+import org.testcontainers.containers.PostgreSQLContainer
 import java.time.ZoneId
 import java.time.ZonedDateTime.now
 import javax.sql.DataSource
 
-
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
 @ActiveProfiles("spring-datasource")
-@AutoConfigureEmbeddedDatabase(
-    provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY,
-    refresh = AutoConfigureEmbeddedDatabase.RefreshMode.AFTER_EACH_TEST_METHOD,
-    type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES
-)
 internal class RepositoryWithDataSourceIT {
 
     @Autowired
@@ -121,4 +119,29 @@ internal class RepositoryWithDataSourceIT {
         elapsedTime = nextLong(),
         createdAt = now(ZoneId.of("UTC"))
     )
+
+    companion object {
+        var postgreSQLContainer = PostgreSQLContainer("postgres:13-alpine")
+            .withDatabaseName("lsd_database")
+            .withUsername("sa")
+            .withPassword("sa")
+            .withExposedPorts(5432)
+            .withCreateContainerCmdModifier { cmd ->
+                cmd.withHostConfig(
+                    HostConfig().withPortBindings(PortBinding(Ports.Binding.bindPort(5432), ExposedPort(5432)))
+                )
+            }
+
+        @BeforeAll
+        @JvmStatic
+        internal fun beforeAll() {
+            postgreSQLContainer.start()
+        }
+
+        @AfterAll
+        @JvmStatic
+        internal fun afterAll() {
+            postgreSQLContainer.stop()
+        }
+    }
 }

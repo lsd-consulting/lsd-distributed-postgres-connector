@@ -1,5 +1,9 @@
 package io.lsdconsulting.lsd.distributed.postgres.integration
 
+import com.github.dockerjava.api.model.ExposedPort
+import com.github.dockerjava.api.model.HostConfig
+import com.github.dockerjava.api.model.PortBinding
+import com.github.dockerjava.api.model.Ports
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.config.log
@@ -7,7 +11,6 @@ import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplica
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.repository.TestRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.apache.commons.lang3.RandomUtils
 import org.apache.commons.lang3.RandomUtils.nextInt
@@ -18,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.test.context.ActiveProfiles
+import org.testcontainers.containers.PostgreSQLContainer
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.ZonedDateTime.now
@@ -25,14 +29,10 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import javax.sql.DataSource
 
+private const val POSTGRES_PORT = 5432
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
 @ActiveProfiles("spring-datasource")
-@AutoConfigureEmbeddedDatabase(
-    provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY,
-    refresh = AutoConfigureEmbeddedDatabase.RefreshMode.AFTER_EACH_TEST_METHOD,
-    type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES
-)
 internal class AdminRepositoryIT {
 
     @Autowired
@@ -55,6 +55,7 @@ internal class AdminRepositoryIT {
     @BeforeEach
     fun setup() {
         testRepository.createTable(dataSource)
+        testRepository.clearTable(dataSource)
     }
 
     @Test
@@ -216,4 +217,31 @@ internal class AdminRepositoryIT {
                 elapsedTime = RandomUtils.nextLong(),
                 createdAt = now(ZoneId.of("UTC")),
     )
+
+    companion object {
+        private var postgreSQLContainer: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:13-alpine")
+            .withDatabaseName("lsd_database")
+            .withUsername("sa")
+            .withPassword("sa")
+            .withExposedPorts(POSTGRES_PORT)
+            .withCreateContainerCmdModifier { cmd ->
+                cmd.withHostConfig(
+                    HostConfig().withPortBindings(PortBinding(Ports.Binding.bindPort(POSTGRES_PORT), ExposedPort(
+                        POSTGRES_PORT
+                    )))
+                )
+            }
+
+        @BeforeAll
+        @JvmStatic
+        internal fun beforeAll() {
+            postgreSQLContainer.start()
+        }
+
+        @AfterAll
+        @JvmStatic
+        internal fun afterAll() {
+            postgreSQLContainer.stop()
+        }
+    }
 }

@@ -18,7 +18,9 @@ private const val INSERT_QUERY =
 class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     private var active: Boolean = true
     private var dataSource: DataSource?
+    private lateinit var config: HikariConfig
     private var objectMapper: ObjectMapper
+    private val failOnConnectionError: Boolean
 
     constructor(
         dataSource: DataSource,
@@ -26,17 +28,20 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     ) {
         this.dataSource = dataSource
         this.objectMapper = objectMapper
+        this.failOnConnectionError = false
     }
 
     constructor(dbConnectionString: String, objectMapper: ObjectMapper, failOnConnectionError: Boolean = false) {
-        val config = HikariConfig()
+        config = HikariConfig()
         config.jdbcUrl = dbConnectionString
         config.driverClassName = "org.postgresql.Driver"
-        this.dataSource = createDataSource(config, failOnConnectionError)
+        this.dataSource = null
         this.objectMapper = objectMapper
+        this.failOnConnectionError = failOnConnectionError
+
     }
 
-    private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean):DataSource? = try {
+    private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean): DataSource? = try {
         HikariDataSource(config)
     } catch (e: HikariPool.PoolInitializationException) {
         if (failOnConnectionError) {
@@ -47,6 +52,9 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     }
 
     override fun save(interceptedInteraction: InterceptedInteraction) {
+        if (dataSource == null) {
+            this.dataSource = createDataSource(config, failOnConnectionError)
+        }
         if (isActive()) {
             dataSource!!.connection.use { con ->
                 con.prepareStatement(INSERT_QUERY).use { pst ->
@@ -70,6 +78,9 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     }
 
     override fun findByTraceIds(vararg traceId: String): List<InterceptedInteraction> {
+        if (dataSource == null) {
+            this.dataSource = createDataSource(config, failOnConnectionError)
+        }
         if (isActive()) {
             val startTime = System.currentTimeMillis()
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()

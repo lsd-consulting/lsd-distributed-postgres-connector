@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.ApplicationContext
@@ -24,7 +23,7 @@ open class LibraryConfig {
     ) = InterceptedDocumentPostgresRepository(dbConnectionString, objectMapper, failOnConnectionError)
 
     @Bean
-    @ConditionalOnBean(value = [DataSource::class])
+    @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('dataSource')}")
     @ConditionalOnMissingBean(value = [InterceptedDocumentPostgresRepository::class])
     open fun interceptedDocumentRepositoryFromDataSource(
         dataSource: DataSource,
@@ -43,7 +42,7 @@ open class LibraryConfig {
     ) = InterceptedDocumentPostgresAdminRepository(dbConnectionString, objectMapper, failOnConnectionError)
 
     @Bean
-    @ConditionalOnBean(value = [DataSource::class])
+    @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('dataSource')}")
     @ConditionalOnMissingBean(value = [InterceptedDocumentPostgresAdminRepository::class])
     open fun interceptedDocumentAdminRepositoryFromDataSource(
         dataSource: DataSource,

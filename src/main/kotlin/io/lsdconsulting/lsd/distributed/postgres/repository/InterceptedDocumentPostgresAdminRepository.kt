@@ -18,7 +18,9 @@ private const val QUERY_FOR_RECENT_UNIQUE_TRACE_IDS =
 class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepository {
     private var active: Boolean = true
     private var dataSource: DataSource?
+    private lateinit var config: HikariConfig
     private var objectMapper: ObjectMapper
+    private val failOnConnectionError: Boolean
 
     constructor(
         dataSource: DataSource,
@@ -26,14 +28,16 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
     ) {
         this.dataSource = dataSource
         this.objectMapper = objectMapper
+        this.failOnConnectionError = false
     }
 
     constructor(dbConnectionString: String, objectMapper: ObjectMapper, failOnConnectionError: Boolean = false) {
-        val config = HikariConfig()
+        config = HikariConfig()
         config.jdbcUrl = dbConnectionString
         config.driverClassName = "org.postgresql.Driver"
-        this.dataSource = createDataSource(config, failOnConnectionError)
+        this.dataSource = null
         this.objectMapper = objectMapper
+        this.failOnConnectionError = failOnConnectionError
     }
 
     private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean): DataSource? = try {
@@ -47,6 +51,9 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
     }
 
     override fun findRecentFlows(resultSizeLimit: Int): List<InterceptedFlow> {
+        if (dataSource == null) {
+            this.dataSource = createDataSource(config, failOnConnectionError)
+        }
         val distinctTraceIds = findRecentTraceIds(resultSizeLimit)
         val interactionsGroupedByTraceId = findByTraceIdsUnsorted(distinctTraceIds).groupBy { it.traceId }
 

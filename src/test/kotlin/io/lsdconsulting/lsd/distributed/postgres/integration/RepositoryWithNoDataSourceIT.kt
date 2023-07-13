@@ -1,5 +1,9 @@
 package io.lsdconsulting.lsd.distributed.postgres.integration
 
+import com.github.dockerjava.api.model.ExposedPort
+import com.github.dockerjava.api.model.HostConfig
+import com.github.dockerjava.api.model.PortBinding
+import com.github.dockerjava.api.model.Ports
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
@@ -20,13 +24,12 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
+import org.testcontainers.containers.PostgreSQLContainer
 import java.time.ZoneId
 import java.time.ZonedDateTime.now
 
-
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
 @ActiveProfiles("lsd-datasource")
-@Disabled // This test only works with a real instance of the db, eg. in Docker
 internal class RepositoryWithNoDataSourceIT {
 
     @Autowired
@@ -121,4 +124,29 @@ internal class RepositoryWithNoDataSourceIT {
         elapsedTime = nextLong(),
         createdAt = now(ZoneId.of("UTC"))
     )
+
+    companion object {
+        var postgreSQLContainer = PostgreSQLContainer("postgres:13-alpine")
+            .withDatabaseName("lsd_database")
+            .withUsername("sa")
+            .withPassword("sa")
+            .withExposedPorts(5432)
+            .withCreateContainerCmdModifier { cmd ->
+                cmd.withHostConfig(
+                    HostConfig().withPortBindings(PortBinding(Ports.Binding.bindPort(5432), ExposedPort(5432)))
+                )
+            }
+
+        @BeforeAll
+        @JvmStatic
+        internal fun beforeAll() {
+            postgreSQLContainer.start()
+        }
+
+        @AfterAll
+        @JvmStatic
+        internal fun afterAll() {
+            postgreSQLContainer.stop()
+        }
+    }
 }

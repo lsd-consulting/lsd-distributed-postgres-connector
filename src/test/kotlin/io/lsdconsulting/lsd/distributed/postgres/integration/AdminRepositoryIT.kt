@@ -3,7 +3,8 @@ package io.lsdconsulting.lsd.distributed.postgres.integration
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.config.log
-import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplication
+import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
+import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.apache.commons.lang3.RandomUtils
 import org.apache.commons.lang3.RandomUtils.nextInt
@@ -11,8 +12,6 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.test.context.ActiveProfiles
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -21,21 +20,17 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import javax.sql.DataSource
 
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
 @ActiveProfiles("spring-datasource")
-internal class AdminRepositoryIT: RepositoryIT() {
+internal class AdminRepositoryIT: BaseIT() {
 
-//    @Autowired
-//    private lateinit var testRepository: TestRepository
+    @Autowired
+    lateinit var underTest: InterceptedDocumentPostgresAdminRepository
+
+    @Autowired
+    lateinit var interceptedDocumentPostgresRepository: InterceptedDocumentPostgresRepository
 
     @Autowired
     private lateinit var dataSource: DataSource
-
-//    @Autowired
-//    private lateinit var interceptedDocumentPostgresRepository: InterceptedDocumentPostgresRepository
-//
-//    @Autowired
-//    private lateinit var underTest: InterceptedDocumentPostgresAdminRepository
 
     private val primaryTraceId = randomAlphanumeric(10)
     private val secondaryTraceId = randomAlphanumeric(10)

@@ -6,8 +6,6 @@ import com.github.dockerjava.api.model.PortBinding
 import com.github.dockerjava.api.model.Ports
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplication
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.repository.TestRepository
-import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
-import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,16 +17,10 @@ private const val POSTGRES_IMAGE = "postgres:15.3-alpine3.18"
 private const val TABLE_NAME = "lsd_database"
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
-internal open class RepositoryIT {
+internal open class BaseIT {
 
     @Autowired
     lateinit var testRepository: TestRepository
-
-    @Autowired
-    lateinit var interceptedDocumentPostgresRepository: InterceptedDocumentPostgresRepository
-
-    @Autowired
-    lateinit var underTest: InterceptedDocumentPostgresAdminRepository
 
     companion object {
         private var postgreSQLContainer: PostgreSQLContainer<*> = PostgreSQLContainer(POSTGRES_IMAGE)

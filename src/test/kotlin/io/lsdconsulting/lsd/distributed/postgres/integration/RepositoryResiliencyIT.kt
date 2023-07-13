@@ -39,7 +39,7 @@ internal class RepositoryResiliencyIT : BaseIT() {
     }
 
     @Test
-    fun `should handle db being down gracefully on startup2`() {
+    fun `should fail on startup when db down and failOnConnectionError set to true`() {
         assertThrows<HikariPool.PoolInitializationException> {
             InterceptedDocumentPostgresRepository(
                 dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",

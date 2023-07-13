@@ -6,7 +6,6 @@ import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentP
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import javax.sql.DataSource
@@ -38,8 +37,7 @@ open class LibraryConfig {
     open fun interceptedDocumentAdminRepositoryFromConnectionString(
         @Value("\${lsd.dist.connectionString}") dbConnectionString: String,
         objectMapper: ObjectMapper,
-        @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-    ) = InterceptedDocumentPostgresAdminRepository(dbConnectionString, objectMapper, failOnConnectionError)
+    ) = InterceptedDocumentPostgresAdminRepository(dbConnectionString, objectMapper)
 
     @Bean
     @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('dataSource')}")
@@ -47,8 +45,6 @@ open class LibraryConfig {
     open fun interceptedDocumentAdminRepositoryFromDataSource(
         dataSource: DataSource,
         objectMapper: ObjectMapper,
-        @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-        applicationContext: ApplicationContext,
     ): InterceptedDocumentPostgresAdminRepository {
         log().info("Instantiating InterceptedDocumentPostgresAdminRepository")
         return InterceptedDocumentPostgresAdminRepository(dataSource, objectMapper)

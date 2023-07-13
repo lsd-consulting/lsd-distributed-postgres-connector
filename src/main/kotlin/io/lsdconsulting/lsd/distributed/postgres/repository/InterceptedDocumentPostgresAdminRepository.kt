@@ -3,7 +3,6 @@ package io.lsdconsulting.lsd.distributed.postgres.repository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import com.zaxxer.hikari.pool.HikariPool
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedFlow
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentAdminRepository
@@ -15,12 +14,11 @@ private const val QUERY_BY_TRACE_IDS =
 private const val QUERY_FOR_RECENT_UNIQUE_TRACE_IDS =
     "select m.trace_id from (select trace_id, max(created_at) c from lsd.intercepted_interactions group by trace_id order by c desc limit (?)) m limit (?)"
 
+private const val DEFAULT_CONNECTION_TIMEOUT_MILLIS = 1500L
+
 class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepository {
-    private var active: Boolean = true
-    private var dataSource: DataSource?
-    private lateinit var config: HikariConfig
+    private var dataSource: DataSource
     private var objectMapper: ObjectMapper
-    private val failOnConnectionError: Boolean
 
     constructor(
         dataSource: DataSource,
@@ -28,32 +26,22 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
     ) {
         this.dataSource = dataSource
         this.objectMapper = objectMapper
-        this.failOnConnectionError = false
     }
 
-    constructor(dbConnectionString: String, objectMapper: ObjectMapper, failOnConnectionError: Boolean = false) {
-        config = HikariConfig()
+    constructor(
+        dbConnectionString: String,
+        objectMapper: ObjectMapper,
+        connectionTimeout: Long = DEFAULT_CONNECTION_TIMEOUT_MILLIS
+    ) {
+        val config = HikariConfig()
+        config.initializationFailTimeout = connectionTimeout
         config.jdbcUrl = dbConnectionString
         config.driverClassName = "org.postgresql.Driver"
-        this.dataSource = null
+        this.dataSource = HikariDataSource(config)
         this.objectMapper = objectMapper
-        this.failOnConnectionError = failOnConnectionError
-    }
-
-    private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean): DataSource? = try {
-        HikariDataSource(config)
-    } catch (e: HikariPool.PoolInitializationException) {
-        if (failOnConnectionError) {
-            throw e
-        }
-        active = false
-        null
     }
 
     override fun findRecentFlows(resultSizeLimit: Int): List<InterceptedFlow> {
-        if (dataSource == null) {
-            this.dataSource = createDataSource(config, failOnConnectionError)
-        }
         val distinctTraceIds = findRecentTraceIds(resultSizeLimit)
         val interactionsGroupedByTraceId = findByTraceIdsUnsorted(distinctTraceIds).groupBy { it.traceId }
 
@@ -71,7 +59,7 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
 
     private fun findRecentTraceIds(resultSizeLimit: Int): MutableList<String> {
         val traceIds: MutableList<String> = mutableListOf()
-        dataSource!!.connection.use { con ->
+        dataSource.connection.use { con ->
             val prepareStatement = con.prepareStatement(QUERY_FOR_RECENT_UNIQUE_TRACE_IDS)
             prepareStatement.setInt(1, resultSizeLimit * 1000)
             prepareStatement.setInt(2, resultSizeLimit)
@@ -87,21 +75,21 @@ class InterceptedDocumentPostgresAdminRepository : InterceptedDocumentAdminRepos
     }
 
     private fun findByTraceIdsUnsorted(traceId: List<String>): List<InterceptedInteraction> {
-            val startTime = System.currentTimeMillis()
-            val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
-            dataSource!!.connection.use { con ->
-                val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS)
-                prepareStatement.setArray(1, con.createArrayOf("text", traceId.toTypedArray()))
-                prepareStatement.use { pst ->
-                    pst.executeQuery().use { rs ->
-                        while (rs.next()) {
-                            val interceptedInteraction = rs.toInterceptedInteraction(objectMapper)
-                            interceptedInteractions.add(interceptedInteraction)
-                        }
+        val startTime = System.currentTimeMillis()
+        val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
+        dataSource.connection.use { con ->
+            val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS)
+            prepareStatement.setArray(1, con.createArrayOf("text", traceId.toTypedArray()))
+            prepareStatement.use { pst ->
+                pst.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        val interceptedInteraction = rs.toInterceptedInteraction(objectMapper)
+                        interceptedInteractions.add(interceptedInteraction)
                     }
                 }
             }
-            log().trace("findByTraceIds took {} ms", System.currentTimeMillis() - startTime)
-            return interceptedInteractions
+        }
+        log().trace("findByTraceIds took {} ms", System.currentTimeMillis() - startTime)
+        return interceptedInteractions
     }
 }

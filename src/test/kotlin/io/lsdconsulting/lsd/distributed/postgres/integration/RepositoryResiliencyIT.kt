@@ -1,41 +1,128 @@
 package io.lsdconsulting.lsd.distributed.postgres.integration
 
-import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
-import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import com.zaxxer.hikari.pool.HikariPool
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
+import org.apache.commons.lang3.RandomUtils.nextLong
+import org.awaitility.Awaitility.await
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.*
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.context.ActiveProfiles
-import java.time.ZoneId
-import java.time.ZonedDateTime.now
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 @ActiveProfiles("resiliency")
-internal class RepositoryResiliencyIT: BaseIT() {
+internal class RepositoryResiliencyIT : BaseIT() {
 
-    @Autowired
-    private lateinit var underTest: InterceptedDocumentPostgresRepository
+    @Value("\${lsd.dist.connectionString}")
+    private lateinit var dbConnectionString: String
+
+    @BeforeEach
+    fun setup() {
+        postgreSQLContainer.start()
+        val config = HikariConfig()
+        config.jdbcUrl = dbConnectionString
+        config.driverClassName = "org.postgresql.Driver"
+        testRepository.createTable(HikariDataSource(config))
+    }
 
     @Test
-    fun `should save and retrieve from database`() {
-        val interceptedInteraction = InterceptedInteraction(
-            elapsedTime = 20L,
-            httpStatus = "OK",
-            serviceName = "service",
-            target = "target",
-            path = "/path",
-            httpMethod = "GET",
-            body = "body",
-            interactionType = InteractionType.REQUEST,
-            traceId = randomAlphanumeric(6),
-            createdAt = now(ZoneId.of("UTC"))
+    fun `should handle db being down gracefully on startup`() {
+        InterceptedDocumentPostgresRepository(
+            dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
+            objectMapper = ObjectMapper()
         )
+    }
 
-        underTest.save(interceptedInteraction)
+    @Test
+    fun `should handle db being down gracefully on startup2`() {
+        assertThrows<HikariPool.PoolInitializationException> {
+            InterceptedDocumentPostgresRepository(
+                dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
+                objectMapper = ObjectMapper(),
+                failOnConnectionError = true
+            )
+        }
+    }
 
-        val result = underTest.findByTraceIds(interceptedInteraction.traceId)
-        assertThat(result, hasSize(0))
+    @Test
+    fun `should not slow down startup if db down`() {
+        await()
+            .atLeast(450, MILLISECONDS)
+            .atMost(1250, MILLISECONDS)
+            .untilAsserted {
+                assertThat(
+                    InterceptedDocumentPostgresRepository(
+                        dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
+                        objectMapper = ObjectMapper(),
+                    ), `is`(
+                        notNullValue()
+                    )
+                )
+            }
+    }
+
+    @Test
+    fun `should handle db going down after startup`() {
+        val repository = InterceptedDocumentPostgresRepository(
+            dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
+            objectMapper = ObjectMapper(),
+        )
+        val primaryTraceId = randomAlphanumeric(10)
+        val interceptedInteraction = buildInterceptedInteraction(primaryTraceId)
+        repository.save(interceptedInteraction)
+        val initialResult = repository.findByTraceIds("traceId")
+        assertThat(initialResult, `is`(notNullValue()))
+        postgreSQLContainer.stop()
+        val result = repository.findByTraceIds("traceId")
+        assertThat(result, `is`(empty()))
+    }
+
+    @Test
+    fun `should recover from db going down`() {
+        val repository = InterceptedDocumentPostgresRepository(
+            dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
+            objectMapper = ObjectMapper(),
+        )
+        val primaryTraceId = randomAlphanumeric(10)
+        val interceptedInteraction = buildInterceptedInteraction(primaryTraceId)
+        repository.save(interceptedInteraction)
+        postgreSQLContainer.stop()
+        val result = repository.findByTraceIds("traceId")
+        assertThat(result, `is`(empty()))
+        postgreSQLContainer.start()
+        val initialResult = repository.findByTraceIds("traceId")
+        assertThat(initialResult, `is`(notNullValue()))
+    }
+
+    @Test
+    fun `should not slow down production`() {
+        val repository = InterceptedDocumentPostgresRepository(
+            dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
+            objectMapper = ObjectMapper(),
+        )
+        val primaryTraceId = randomAlphanumeric(10)
+        val secondaryTraceId = randomAlphanumeric(10)
+        val primaryInterceptedInteraction = buildInterceptedInteraction(primaryTraceId)
+        val secondaryInterceptedInteraction = buildInterceptedInteraction(secondaryTraceId)
+        repository.save(primaryInterceptedInteraction)
+        repository.save(secondaryInterceptedInteraction)
+        repository.findByTraceIds(primaryTraceId)
+
+        postgreSQLContainer.stop()
+
+        await()
+            .atLeast(50, MILLISECONDS)
+            .atMost(600, MILLISECONDS)
+            .untilAsserted {
+                assertThat(
+                    repository.findByTraceIds(secondaryTraceId),
+                    `is`(empty())
+                )
+            }
     }
 }

@@ -6,8 +6,6 @@ import io.lsdconsulting.lsd.distributed.postgres.config.log
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
-import org.apache.commons.lang3.RandomUtils
-import org.apache.commons.lang3.RandomUtils.nextInt
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.*
@@ -181,25 +179,9 @@ internal class AdminRepositoryIT: BaseIT() {
     }
 
     private fun saveInterceptedInteraction(traceId: String, createdAt: ZonedDateTime): InterceptedInteraction {
-        val interceptedInteraction = randomInterceptedInteraction()
-            .copy(traceId = traceId, createdAt = createdAt.truncatedTo(ChronoUnit.MILLIS))
+        val interceptedInteraction = buildInterceptedInteraction(traceId = traceId)
+            .copy(createdAt = createdAt.truncatedTo(ChronoUnit.MILLIS))
         interceptedDocumentPostgresRepository.save(interceptedInteraction)
         return interceptedInteraction
     }
-
-    private fun randomInterceptedInteraction() = InterceptedInteraction(
-            traceId = randomAlphanumeric(30),
-                body = randomAlphanumeric(200),
-                requestHeaders = mapOf(randomAlphanumeric(10) to listOf(randomAlphanumeric(20))),
-                responseHeaders = mapOf(randomAlphanumeric(10) to listOf(randomAlphanumeric(20))),
-                serviceName = randomAlphanumeric(30),
-                target = randomAlphanumeric(30),
-                path = randomAlphanumeric(100),
-                httpStatus = randomAlphanumeric(35),
-                httpMethod = randomAlphanumeric(7),
-                interactionType = InteractionType.values()[nextInt(0,InteractionType.values().size - 1)],
-                profile = randomAlphanumeric(10),
-                elapsedTime = RandomUtils.nextLong(),
-                createdAt = now(ZoneId.of("UTC")),
-    )
 }

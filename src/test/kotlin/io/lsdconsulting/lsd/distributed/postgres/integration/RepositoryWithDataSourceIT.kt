@@ -4,14 +4,10 @@ import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
-import org.apache.commons.lang3.RandomUtils.nextInt
-import org.apache.commons.lang3.RandomUtils.nextLong
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import java.time.ZoneId
 import java.time.ZonedDateTime.now
@@ -90,20 +86,4 @@ internal class RepositoryWithDataSourceIT: BaseIT() {
         assertThat(result, hasSize(10))
         (1..10).forEach { assertThat(result[it - 1].createdAt, `is`(interceptedInteractions[10 - it].createdAt)) }
     }
-
-    private fun buildInterceptedInteraction(traceId: String) = InterceptedInteraction(
-        traceId = traceId,
-        body = randomAlphanumeric(100),
-        requestHeaders = mapOf(),
-        responseHeaders = mapOf(),
-        serviceName = randomAlphanumeric(30),
-        target = randomAlphanumeric(30),
-        path = randomAlphanumeric(100),
-        httpStatus = HttpStatus.values()[nextInt(0, HttpStatus.values().size - 1)].name,
-        httpMethod = HttpMethod.values()[nextInt(0, HttpMethod.values().size - 1)].name,
-        interactionType = InteractionType.values()[nextInt(0, InteractionType.values().size - 1)],
-        profile = randomAlphanumeric(20),
-        elapsedTime = nextLong(),
-        createdAt = now(ZoneId.of("UTC"))
-    )
 }

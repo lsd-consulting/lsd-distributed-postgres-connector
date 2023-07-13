@@ -7,6 +7,7 @@ import com.zaxxer.hikari.pool.HikariPool
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentRepository
 import io.lsdconsulting.lsd.distributed.postgres.config.log
+import org.postgresql.util.PSQLException
 import javax.sql.DataSource
 
 
@@ -15,12 +16,12 @@ private const val QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT =
 private const val INSERT_QUERY =
     "insert into lsd.intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
+private const val DEFAULT_CONNECTION_TIMEOUT_MILLIS = 500L
+
 class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     private var active: Boolean = true
     private var dataSource: DataSource?
-    private lateinit var config: HikariConfig
     private var objectMapper: ObjectMapper
-    private val failOnConnectionError: Boolean
 
     constructor(
         dataSource: DataSource,
@@ -28,17 +29,20 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     ) {
         this.dataSource = dataSource
         this.objectMapper = objectMapper
-        this.failOnConnectionError = false
     }
 
-    constructor(dbConnectionString: String, objectMapper: ObjectMapper, failOnConnectionError: Boolean = false) {
-        config = HikariConfig()
+    constructor(
+        dbConnectionString: String,
+        objectMapper: ObjectMapper,
+        failOnConnectionError: Boolean = false,
+        connectionTimeout: Long = DEFAULT_CONNECTION_TIMEOUT_MILLIS
+    ) {
+        val config = HikariConfig()
+        config.initializationFailTimeout = connectionTimeout
         config.jdbcUrl = dbConnectionString
         config.driverClassName = "org.postgresql.Driver"
-        this.dataSource = null
+        this.dataSource = createDataSource(config, failOnConnectionError)
         this.objectMapper = objectMapper
-        this.failOnConnectionError = failOnConnectionError
-
     }
 
     private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean): DataSource? = try {
@@ -52,49 +56,56 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     }
 
     override fun save(interceptedInteraction: InterceptedInteraction) {
-        if (dataSource == null) {
-            this.dataSource = createDataSource(config, failOnConnectionError)
-        }
         if (isActive()) {
-            dataSource!!.connection.use { con ->
-                con.prepareStatement(INSERT_QUERY).use { pst ->
-                    pst.setString(1, interceptedInteraction.traceId)
-                    pst.setString(2, interceptedInteraction.body)
-                    pst.setString(3, objectMapper.writeValueAsString(interceptedInteraction.requestHeaders))
-                    pst.setString(4, objectMapper.writeValueAsString(interceptedInteraction.responseHeaders))
-                    pst.setString(5, interceptedInteraction.serviceName)
-                    pst.setString(6, interceptedInteraction.target)
-                    pst.setString(7, interceptedInteraction.path)
-                    pst.setString(8, interceptedInteraction.httpStatus)
-                    pst.setString(9, interceptedInteraction.httpMethod)
-                    pst.setString(10, interceptedInteraction.interactionType.name)
-                    pst.setString(11, interceptedInteraction.profile)
-                    pst.setLong(12, interceptedInteraction.elapsedTime)
-                    pst.setObject(13, interceptedInteraction.createdAt.toOffsetDateTime())
-                    pst.executeUpdate()
+            try {
+                dataSource!!.connection.use { con ->
+                    con.prepareStatement(INSERT_QUERY).use { pst ->
+                        pst.setString(1, interceptedInteraction.traceId)
+                        pst.setString(2, interceptedInteraction.body)
+                        pst.setString(3, objectMapper.writeValueAsString(interceptedInteraction.requestHeaders))
+                        pst.setString(4, objectMapper.writeValueAsString(interceptedInteraction.responseHeaders))
+                        pst.setString(5, interceptedInteraction.serviceName)
+                        pst.setString(6, interceptedInteraction.target)
+                        pst.setString(7, interceptedInteraction.path)
+                        pst.setString(8, interceptedInteraction.httpStatus)
+                        pst.setString(9, interceptedInteraction.httpMethod)
+                        pst.setString(10, interceptedInteraction.interactionType.name)
+                        pst.setString(11, interceptedInteraction.profile)
+                        pst.setLong(12, interceptedInteraction.elapsedTime)
+                        pst.setObject(13, interceptedInteraction.createdAt.toOffsetDateTime())
+                        pst.executeUpdate()
+                    }
                 }
+            } catch (e: PSQLException) {
+                log().error(
+                    "Skipping persisting the interceptedInteraction due to exception - interceptedInteraction:{}, message:{}, stackTrace:{}",
+                    interceptedInteraction,
+                    e.message,
+                    e.stackTrace
+                )
             }
         }
     }
 
     override fun findByTraceIds(vararg traceId: String): List<InterceptedInteraction> {
-        if (dataSource == null) {
-            this.dataSource = createDataSource(config, failOnConnectionError)
-        }
         if (isActive()) {
             val startTime = System.currentTimeMillis()
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
-            dataSource!!.connection.use { con ->
-                val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT)
-                prepareStatement.setArray(1, con.createArrayOf("text", traceId))
-                prepareStatement.use { pst ->
-                    pst.executeQuery().use { rs ->
-                        while (rs.next()) {
-                            val interceptedInteraction = rs.toInterceptedInteraction(objectMapper)
-                            interceptedInteractions.add(interceptedInteraction)
+            try {
+                dataSource!!.connection.use { con ->
+                    val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT)
+                    prepareStatement.setArray(1, con.createArrayOf("text", traceId))
+                    prepareStatement.use { pst ->
+                        pst.executeQuery().use { rs ->
+                            while (rs.next()) {
+                                val interceptedInteraction = rs.toInterceptedInteraction(objectMapper)
+                                interceptedInteractions.add(interceptedInteraction)
+                            }
                         }
                     }
                 }
+            } catch (e: PSQLException) {
+                log().error("Failed to retrieve interceptedInteractions - message:${e.message}", e.stackTrace)
             }
             log().trace("findByTraceIds took {} ms", System.currentTimeMillis() - startTime)
             return interceptedInteractions

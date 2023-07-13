@@ -9,7 +9,6 @@ jobs:
   build:
     strategy:
       matrix:
-        java: [8,11]
         gradle-version: [6.3]
         docker-version: [19.09]
         docker-channel: [stable]

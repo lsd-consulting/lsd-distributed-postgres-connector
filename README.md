@@ -28,6 +28,20 @@ the `failOnConnectionError` parameter:
   This is a useful mode for applications that rely on the connector for their critical functionality, eg.
   the `lsd-dostributed-generator-ui`.
 
+## Connection
+The connector accepts a connection string as the value of the `lsd.dist.connectionString` property from the `lsd-distributed-connector` library.
+For example:
+```properties
+lsd.dist.connectionString=jdbc:postgresql://localhost:5432/lsd_database?user=sa&password=sa&useUnicode=true&characterEncoding=UTF-8
+```
+
+However, if the connection requires a more complicated setup, the connector is able to pick up a `DataSource` bean. 
+In this case the above property needs to be set to `dataSource`. For example:
+```properties
+lsd.dist.connectionString=dataSource
+spring.datasource.url=jdbc:postgresql://localhost:5432/lsd_database?user=sa&password=sa&useUnicode=true&characterEncoding=UTF-8
+```
+
 ## Properties
 
 The following properties can be overridden by setting a System property.

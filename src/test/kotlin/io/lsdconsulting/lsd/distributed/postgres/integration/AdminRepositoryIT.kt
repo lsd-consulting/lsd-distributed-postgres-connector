@@ -1,16 +1,9 @@
 package io.lsdconsulting.lsd.distributed.postgres.integration
 
-import com.github.dockerjava.api.model.ExposedPort
-import com.github.dockerjava.api.model.HostConfig
-import com.github.dockerjava.api.model.PortBinding
-import com.github.dockerjava.api.model.Ports
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.config.log
 import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.TestApplication
-import io.lsdconsulting.lsd.distributed.postgres.integration.testapp.repository.TestRepository
-import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
-import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.apache.commons.lang3.RandomUtils
 import org.apache.commons.lang3.RandomUtils.nextInt
@@ -21,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.test.context.ActiveProfiles
-import org.testcontainers.containers.PostgreSQLContainer
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.ZonedDateTime.now
@@ -29,23 +21,21 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import javax.sql.DataSource
 
-private const val POSTGRES_PORT = 5432
-
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT, classes = [TestApplication::class])
 @ActiveProfiles("spring-datasource")
-internal class AdminRepositoryIT {
+internal class AdminRepositoryIT: RepositoryIT() {
 
-    @Autowired
-    private lateinit var testRepository: TestRepository
+//    @Autowired
+//    private lateinit var testRepository: TestRepository
 
     @Autowired
     private lateinit var dataSource: DataSource
 
-    @Autowired
-    private lateinit var interceptedDocumentPostgresRepository: InterceptedDocumentPostgresRepository
-
-    @Autowired
-    private lateinit var underTest: InterceptedDocumentPostgresAdminRepository
+//    @Autowired
+//    private lateinit var interceptedDocumentPostgresRepository: InterceptedDocumentPostgresRepository
+//
+//    @Autowired
+//    private lateinit var underTest: InterceptedDocumentPostgresAdminRepository
 
     private val primaryTraceId = randomAlphanumeric(10)
     private val secondaryTraceId = randomAlphanumeric(10)
@@ -217,31 +207,4 @@ internal class AdminRepositoryIT {
                 elapsedTime = RandomUtils.nextLong(),
                 createdAt = now(ZoneId.of("UTC")),
     )
-
-    companion object {
-        private var postgreSQLContainer: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:15.3-alpine3.18")
-            .withDatabaseName("lsd_database")
-            .withUsername("sa")
-            .withPassword("sa")
-            .withExposedPorts(POSTGRES_PORT)
-            .withCreateContainerCmdModifier { cmd ->
-                cmd.withHostConfig(
-                    HostConfig().withPortBindings(PortBinding(Ports.Binding.bindPort(POSTGRES_PORT), ExposedPort(
-                        POSTGRES_PORT
-                    )))
-                )
-            }
-
-        @BeforeAll
-        @JvmStatic
-        internal fun beforeAll() {
-            postgreSQLContainer.start()
-        }
-
-        @AfterAll
-        @JvmStatic
-        internal fun afterAll() {
-            postgreSQLContainer.stop()
-        }
-    }
 }

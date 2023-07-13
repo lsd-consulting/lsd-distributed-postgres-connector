@@ -42,13 +42,13 @@ internal class RepositoryWithDataSourceIT: BaseIT() {
             httpMethod = "GET",
             body = "body",
             interactionType = InteractionType.REQUEST,
-            traceId = "traceId",
+            traceId = randomAlphanumeric(6),
             createdAt = now(ZoneId.of("UTC"))
         )
 
         underTest.save(interceptedInteraction)
 
-        val result = underTest.findByTraceIds("traceId")
+        val result = underTest.findByTraceIds(interceptedInteraction.traceId)
         assertThat(result, hasSize(1))
         assertThat(result[0].elapsedTime, `is`(20L))
         assertThat(result[0].httpStatus, `is`("OK"))

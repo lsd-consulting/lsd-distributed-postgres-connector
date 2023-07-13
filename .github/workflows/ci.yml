@@ -7,8 +7,29 @@ name: CI
 on: [ push, pull_request ]
 jobs:
   build:
+    strategy:
+      matrix:
+        java: [8,11]
+        gradle-version: [6.3]
+        docker-version: [19.09]
+        docker-channel: [stable]
+        os: [ubuntu-latest]
     runs-on: ubuntu-latest
     steps:
+      - name: Update
+        run: sudo apt-get update -yqq --fix-missing
+      - name: Setup Docker ${{ matrix.docker-channel }} ${{ matrix.docker-version }}
+        uses: docker-practice/actions-setup-docker@master
+        with:
+          docker_version: ${{ matrix.docker-version }}
+          docker_channel: ${{ matrix.docker-channel }}
+      - name: Cache docker ${{ matrix.docker-channel }} ${{ matrix.docker-version }}
+        uses: actions/cache@v1
+        with:
+          path: ~/.docker
+          key: ${{ runner.os }}-${{ matrix.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.os }}-docker-
       - uses: actions/checkout@v3
       - name: Set up JDK 17
         uses: actions/setup-java@v3

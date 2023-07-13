@@ -126,7 +126,7 @@ internal class RepositoryWithNoDataSourceIT {
     )
 
     companion object {
-        var postgreSQLContainer = PostgreSQLContainer("postgres:15.3-alpine3.18")
+        private var postgreSQLContainer: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:15.3-alpine3.18")
             .withDatabaseName("lsd_database")
             .withUsername("sa")
             .withPassword("sa")

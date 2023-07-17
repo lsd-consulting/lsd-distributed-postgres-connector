@@ -60,17 +60,17 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
             try {
                 dataSource!!.connection.use { con ->
                     con.prepareStatement(INSERT_QUERY).use { pst ->
-                        pst.setString(1, interceptedInteraction.traceId)
+                        pst.setString(1, interceptedInteraction.traceId.trimToSize(30))
                         pst.setString(2, interceptedInteraction.body)
                         pst.setString(3, objectMapper.writeValueAsString(interceptedInteraction.requestHeaders))
                         pst.setString(4, objectMapper.writeValueAsString(interceptedInteraction.responseHeaders))
-                        pst.setString(5, interceptedInteraction.serviceName)
-                        pst.setString(6, interceptedInteraction.target)
-                        pst.setString(7, interceptedInteraction.path)
-                        pst.setString(8, interceptedInteraction.httpStatus)
-                        pst.setString(9, interceptedInteraction.httpMethod)
+                        pst.setString(5, interceptedInteraction.serviceName.trimToSize(200)) // TODO Replace with `lsd.core.label.maxWidth` equivalent
+                        pst.setString(6, interceptedInteraction.target.trimToSize(200)) // TODO Replace with `lsd.core.label.maxWidth` equivalent
+                        pst.setString(7, interceptedInteraction.path.trimToSize(200)) // TODO Replace with `lsd.core.label.maxWidth` equivalent
+                        pst.setString(8, interceptedInteraction.httpStatus?.trimToSize(35))
+                        pst.setString(9, interceptedInteraction.httpMethod?.trimToSize(7))
                         pst.setString(10, interceptedInteraction.interactionType.name)
-                        pst.setString(11, interceptedInteraction.profile)
+                        pst.setString(11, interceptedInteraction.profile?.trimToSize(20))
                         pst.setLong(12, interceptedInteraction.elapsedTime)
                         pst.setObject(13, interceptedInteraction.createdAt.toOffsetDateTime())
                         pst.executeUpdate()

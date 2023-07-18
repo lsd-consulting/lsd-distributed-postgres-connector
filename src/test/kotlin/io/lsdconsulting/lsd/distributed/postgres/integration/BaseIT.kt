@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit.MILLIS
 
 private const val POSTGRES_PORT = 5432
 private const val POSTGRES_IMAGE = "postgres:15.3-alpine3.18"
@@ -44,7 +45,7 @@ internal open class BaseIT {
         interactionType = InteractionType.values()[RandomUtils.nextInt(0, InteractionType.values().size - 1)],
         profile = RandomStringUtils.randomAlphanumeric(20),
         elapsedTime = RandomUtils.nextLong(),
-        createdAt = ZonedDateTime.now(ZoneId.of("UTC"))
+        createdAt = ZonedDateTime.now(ZoneId.of("UTC")).truncatedTo(MILLIS)
     )
 
     companion object {

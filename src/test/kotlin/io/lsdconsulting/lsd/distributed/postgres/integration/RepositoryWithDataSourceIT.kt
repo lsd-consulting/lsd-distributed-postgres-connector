@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import java.time.ZoneId
 import java.time.ZonedDateTime.now
+import java.time.temporal.ChronoUnit.MILLIS
 import javax.sql.DataSource
 
 @ActiveProfiles("spring-datasource")
@@ -39,7 +40,7 @@ internal class RepositoryWithDataSourceIT: BaseIT() {
             body = "body",
             interactionType = InteractionType.REQUEST,
             traceId = randomAlphanumeric(6),
-            createdAt = now(ZoneId.of("UTC"))
+            createdAt = now(ZoneId.of("UTC")).truncatedTo(MILLIS)
         )
 
         underTest.save(interceptedInteraction)

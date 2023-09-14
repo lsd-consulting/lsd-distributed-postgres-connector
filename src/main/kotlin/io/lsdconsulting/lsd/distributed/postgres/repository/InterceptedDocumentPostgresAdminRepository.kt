@@ -6,7 +6,7 @@ import com.zaxxer.hikari.HikariDataSource
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedFlow
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentAdminRepository
-import io.lsdconsulting.lsd.distributed.postgres.config.log
+import lsd.logging.log
 import javax.sql.DataSource
 
 private const val QUERY_BY_TRACE_IDS =

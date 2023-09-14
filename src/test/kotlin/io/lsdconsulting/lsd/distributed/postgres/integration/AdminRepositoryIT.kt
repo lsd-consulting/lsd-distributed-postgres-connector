@@ -2,9 +2,9 @@ package io.lsdconsulting.lsd.distributed.postgres.integration
 
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
-import io.lsdconsulting.lsd.distributed.postgres.config.log
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
+import lsd.logging.log
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*

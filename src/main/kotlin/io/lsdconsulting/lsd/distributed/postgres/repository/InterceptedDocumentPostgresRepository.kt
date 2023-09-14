@@ -6,7 +6,7 @@ import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.pool.HikariPool
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.connector.repository.InterceptedDocumentRepository
-import io.lsdconsulting.lsd.distributed.postgres.config.log
+import lsd.logging.log
 import org.postgresql.util.PSQLException
 import javax.sql.DataSource
 

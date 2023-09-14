@@ -3,6 +3,7 @@ package io.lsdconsulting.lsd.distributed.postgres.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresAdminRepository
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
+import lsd.logging.log
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean

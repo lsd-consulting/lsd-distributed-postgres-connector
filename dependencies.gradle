@@ -1,6 +1,6 @@
 dependencies {
     // DB
-    implementation 'com.zaxxer:HikariCP:5.0.1'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
     implementation 'org.postgresql:postgresql:42.6.0'
 
     // LSD

@@ -40,9 +40,9 @@ internal open class BaseIT {
         serviceName = RandomStringUtils.randomAlphanumeric(30),
         target = RandomStringUtils.randomAlphanumeric(30),
         path = RandomStringUtils.randomAlphanumeric(100),
-        httpStatus = HttpStatus.values()[RandomUtils.nextInt(0, HttpStatus.values().size - 1)].name,
-        httpMethod = HttpMethod.values()[RandomUtils.nextInt(0, HttpMethod.values().size - 1)].name,
-        interactionType = InteractionType.values()[RandomUtils.nextInt(0, InteractionType.values().size - 1)],
+        httpStatus = HttpStatus.entries[RandomUtils.nextInt(0, HttpStatus.entries.size - 1)].name,
+        httpMethod = HttpMethod.values()[RandomUtils.nextInt(0, HttpMethod.values().size - 1)].name(),
+        interactionType = InteractionType.entries[RandomUtils.nextInt(0, InteractionType.entries.size - 1)],
         profile = RandomStringUtils.randomAlphanumeric(20),
         elapsedTime = RandomUtils.nextLong(),
         createdAt = ZonedDateTime.now(ZoneId.of("UTC")).truncatedTo(MILLIS)

@@ -8,7 +8,7 @@ dependencies {
     implementation 'io.github.lsd-consulting:lsd-logging-library:1.0.8'
 
     // Spring
-    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.2.2'
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.2.3'
 
     // Other
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'

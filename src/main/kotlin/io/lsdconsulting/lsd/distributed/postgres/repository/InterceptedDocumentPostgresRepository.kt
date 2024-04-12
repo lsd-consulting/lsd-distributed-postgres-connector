@@ -12,9 +12,9 @@ import javax.sql.DataSource
 
 
 private const val QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT =
-    "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?) order by o.created_at"
+    "select * from intercepted_interactions o where o.trace_id = ANY (?) order by o.created_at"
 private const val INSERT_QUERY =
-    "insert into lsd.intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "insert into intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 private const val DEFAULT_CONNECTION_TIMEOUT_MILLIS = 500L
 

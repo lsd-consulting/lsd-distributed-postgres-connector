@@ -10,9 +10,9 @@ import lsd.logging.log
 import javax.sql.DataSource
 
 private const val QUERY_BY_TRACE_IDS =
-    "select * from lsd.intercepted_interactions o where o.trace_id = ANY (?)"
+    "select * from intercepted_interactions o where o.trace_id = ANY (?)"
 private const val QUERY_FOR_RECENT_UNIQUE_TRACE_IDS =
-    "select m.trace_id from (select trace_id, max(created_at) c from lsd.intercepted_interactions group by trace_id order by c desc limit (?)) m limit (?)"
+    "select m.trace_id from (select trace_id, max(created_at) c from intercepted_interactions group by trace_id order by c desc limit (?)) m limit (?)"
 
 private const val DEFAULT_CONNECTION_TIMEOUT_MILLIS = 1500L
 

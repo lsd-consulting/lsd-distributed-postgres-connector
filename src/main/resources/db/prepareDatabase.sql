@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS intercepted_interactions
 (
     id               integer PRIMARY KEY generated always as identity,
-    trace_id         VARCHAR(30),
+    trace_id         VARCHAR(32),
     body             TEXT,
     request_headers  TEXT,
     response_headers TEXT,

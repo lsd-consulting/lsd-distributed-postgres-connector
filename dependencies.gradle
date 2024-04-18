@@ -4,8 +4,8 @@ dependencies {
     implementation 'org.postgresql:postgresql:42.7.1'
 
     // LSD
-    api 'io.github.lsd-consulting:lsd-distributed-connector:2.0.4'
-    implementation 'io.github.lsd-consulting:lsd-logging-library:1.0.8'
+    api 'io.github.lsd-consulting:lsd-distributed-connector:2.0.6'
+    implementation 'io.github.lsd-consulting:lsd-logging-library:1.0.12'
 
     // Spring
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.2.2'

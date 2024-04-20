@@ -60,7 +60,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
             try {
                 dataSource!!.connection.use { con ->
                     con.prepareStatement(INSERT_QUERY).use { pst ->
-                        pst.setString(1, interceptedInteraction.traceId.trimToSize(30))
+                        pst.setString(1, interceptedInteraction.traceId.trimToSize(32))
                         pst.setString(2, interceptedInteraction.body)
                         pst.setString(3, objectMapper.writeValueAsString(interceptedInteraction.requestHeaders))
                         pst.setString(4, objectMapper.writeValueAsString(interceptedInteraction.responseHeaders))

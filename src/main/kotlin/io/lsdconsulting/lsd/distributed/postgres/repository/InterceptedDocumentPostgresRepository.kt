@@ -17,6 +17,7 @@ private const val INSERT_QUERY =
     "insert into intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 private const val DEFAULT_CONNECTION_TIMEOUT_MILLIS = 500L
+private const val DRIVER_CLASS_NAME = "org.postgresql.Driver"
 
 class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     private var active: Boolean = true
@@ -80,7 +81,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         val config = HikariConfig()
         config.initializationFailTimeout = connectionTimeout
         config.jdbcUrl = dbConnectionString
-        config.driverClassName = "org.postgresql.Driver"
+        config.driverClassName = DRIVER_CLASS_NAME
         this.dataSource = createDataSource(config, failOnConnectionError)
         this.objectMapper = objectMapper
         this.traceIdMaxLength = traceIdMaxLength

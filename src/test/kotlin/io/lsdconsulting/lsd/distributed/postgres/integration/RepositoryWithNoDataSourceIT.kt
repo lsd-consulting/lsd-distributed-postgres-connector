@@ -5,10 +5,13 @@ import com.zaxxer.hikari.HikariDataSource
 import io.lsdconsulting.lsd.distributed.connector.model.InteractionType
 import io.lsdconsulting.lsd.distributed.connector.model.InterceptedInteraction
 import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentPostgresRepository
+import io.lsdconsulting.lsd.distributed.postgres.repository.trimToSize
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.*
-import org.junit.jupiter.api.*
+import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`is`
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.context.ActiveProfiles
@@ -62,7 +65,7 @@ internal class RepositoryWithNoDataSourceIT: BaseIT() {
     }
 
     @Test
-    fun `should save and retrieve random entry from database`() {
+    fun `should save and retrieve trimmed random entry from database`() {
         val traceId = randomAlphanumeric(10)
         val interceptedInteraction = buildInterceptedInteraction(traceId)
 
@@ -71,10 +74,10 @@ internal class RepositoryWithNoDataSourceIT: BaseIT() {
         val result = underTest.findByTraceIds(interceptedInteraction.traceId)
         assertThat(result, hasSize(1))
         assertThat(result[0].elapsedTime, `is`(interceptedInteraction.elapsedTime))
-        assertThat(result[0].httpStatus, `is`(interceptedInteraction.httpStatus))
-        assertThat(result[0].path, `is`(interceptedInteraction.path))
-        assertThat(result[0].httpMethod, `is`(interceptedInteraction.httpMethod))
-        assertThat(result[0].body, `is`(interceptedInteraction.body))
+        assertThat(result[0].httpStatus, `is`(interceptedInteraction.httpStatus?.trimToSize(10)))
+        assertThat(result[0].path, `is`(interceptedInteraction.path.trimToSize(10)))
+        assertThat(result[0].httpMethod, `is`(interceptedInteraction.httpMethod?.trimToSize(10)))
+        assertThat(result[0].body, `is`(interceptedInteraction.body?.trimToSize(10)))
         assertThat(result[0].interactionType, `is`(interceptedInteraction.interactionType))
         assertThat(result[0].createdAt, `is`(interceptedInteraction.createdAt))
     }

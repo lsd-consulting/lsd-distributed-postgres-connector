@@ -10,7 +10,9 @@ import org.apache.commons.lang3.RandomUtils.nextLong
 import org.awaitility.Awaitility.await
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.context.ActiveProfiles
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -34,7 +36,17 @@ internal class RepositoryResiliencyIT : BaseIT() {
     fun `should handle db being down gracefully on startup`() {
         InterceptedDocumentPostgresRepository(
             dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
-            objectMapper = ObjectMapper()
+            objectMapper = ObjectMapper(),
+            traceIdMaxLength = 32,
+            bodyMaxLength = 10000,
+            requestHeadersMaxLength = 10000,
+            responseHeadersMaxLength = 10000,
+            serviceNameMaxLength = 200,
+            targetMaxLength = 200,
+            pathMaxLength = 200,
+            httpStatusMaxLength = 35,
+            httpMethodMaxLength = 7,
+            profileMaxLength = 20,
         )
     }
 
@@ -44,7 +56,17 @@ internal class RepositoryResiliencyIT : BaseIT() {
             InterceptedDocumentPostgresRepository(
                 dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
                 objectMapper = ObjectMapper(),
-                failOnConnectionError = true
+                failOnConnectionError = true,
+                traceIdMaxLength = 32,
+                bodyMaxLength = 10000,
+                requestHeadersMaxLength = 10000,
+                responseHeadersMaxLength = 10000,
+                serviceNameMaxLength = 200,
+                targetMaxLength = 200,
+                pathMaxLength = 200,
+                httpStatusMaxLength = 35,
+                httpMethodMaxLength = 7,
+                profileMaxLength = 20,
             )
         }
     }
@@ -59,6 +81,16 @@ internal class RepositoryResiliencyIT : BaseIT() {
                     InterceptedDocumentPostgresRepository(
                         dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
                         objectMapper = ObjectMapper(),
+                        traceIdMaxLength = 32,
+                        bodyMaxLength = 10000,
+                        requestHeadersMaxLength = 10000,
+                        responseHeadersMaxLength = 10000,
+                        serviceNameMaxLength = 200,
+                        targetMaxLength = 200,
+                        pathMaxLength = 200,
+                        httpStatusMaxLength = 35,
+                        httpMethodMaxLength = 7,
+                        profileMaxLength = 20,
                     ), `is`(
                         notNullValue()
                     )
@@ -71,6 +103,16 @@ internal class RepositoryResiliencyIT : BaseIT() {
         val repository = InterceptedDocumentPostgresRepository(
             dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
             objectMapper = ObjectMapper(),
+            traceIdMaxLength = 32,
+            bodyMaxLength = 10000,
+            requestHeadersMaxLength = 10000,
+            responseHeadersMaxLength = 10000,
+            serviceNameMaxLength = 200,
+            targetMaxLength = 200,
+            pathMaxLength = 200,
+            httpStatusMaxLength = 35,
+            httpMethodMaxLength = 7,
+            profileMaxLength = 20,
         )
         val primaryTraceId = randomAlphanumeric(10)
         val interceptedInteraction = buildInterceptedInteraction(primaryTraceId)
@@ -87,6 +129,16 @@ internal class RepositoryResiliencyIT : BaseIT() {
         val repository = InterceptedDocumentPostgresRepository(
             dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
             objectMapper = ObjectMapper(),
+            traceIdMaxLength = 32,
+            bodyMaxLength = 10000,
+            requestHeadersMaxLength = 10000,
+            responseHeadersMaxLength = 10000,
+            serviceNameMaxLength = 200,
+            targetMaxLength = 200,
+            pathMaxLength = 200,
+            httpStatusMaxLength = 35,
+            httpMethodMaxLength = 7,
+            profileMaxLength = 20,
         )
         val primaryTraceId = randomAlphanumeric(10)
         val interceptedInteraction = buildInterceptedInteraction(primaryTraceId)
@@ -104,6 +156,16 @@ internal class RepositoryResiliencyIT : BaseIT() {
         val repository = InterceptedDocumentPostgresRepository(
             dbConnectionString = "jdbc:postgresql://localhost:${nextLong(6000, 7000)}/",
             objectMapper = ObjectMapper(),
+            traceIdMaxLength = 32,
+            bodyMaxLength = 10000,
+            requestHeadersMaxLength = 10000,
+            responseHeadersMaxLength = 10000,
+            serviceNameMaxLength = 200,
+            targetMaxLength = 200,
+            pathMaxLength = 200,
+            httpStatusMaxLength = 35,
+            httpMethodMaxLength = 7,
+            profileMaxLength = 20,
         )
         val primaryTraceId = randomAlphanumeric(10)
         val secondaryTraceId = randomAlphanumeric(10)

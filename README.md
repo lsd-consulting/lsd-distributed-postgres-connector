@@ -46,6 +46,19 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/lsd_database?user=sa&pass
 
 The following properties can be overridden by setting a System property.
 
-| Property Name                             | Default | Description                                                                                                                                                                                |
-|-------------------------------------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| lsd.dist.db.failOnConnectionError         | false   | See [Modes](#Modes) for details.                                                                                                                                                           |
+| Property Name                        | Default | Description                                                                      |
+|--------------------------------------|---------|----------------------------------------------------------------------------------|
+| lsd.dist.db.failOnConnectionError    | false   | See [Modes](#Modes) for details.                                                 |
+| lsd.dist.db.traceIdMaxLength         | 32      | To prevent insertion issues the trace id will be trimmed to this length          |
+| lsd.dist.db.bodyMaxLength            | 10000   | To prevent insertion issues the body will be trimmed to this length              |
+| lsd.dist.db.requestHeadersMaxLength  | 10000   | To prevent insertion issues the request headers will be trimmed to this length   |
+| lsd.dist.db.responseHeadersMaxLength | 10000   | To prevent insertion issues the response headers will be trimmed to this length  |
+| lsd.dist.db.serviceNameMaxLength     | 200     | To prevent insertion issues the service name will be trimmed to this length      |
+| lsd.dist.db.targetMaxLength          | 200     | To prevent insertion issues the target name will be trimmed to this length       |
+| lsd.dist.db.pathMaxLength            | 200     | To prevent insertion issues the path will be trimmed to this length              |
+| lsd.dist.db.httpStatusMaxLength      | 35      | To prevent insertion issues the HTTP status value will be trimmed to this length |
+| lsd.dist.db.httpMethodMaxLength      | 7       | To prevent insertion issues the HTTP method will be trimmed to this length       |
+| lsd.dist.db.profileMaxLength         | 20      | To prevent insertion issues the profile name will be trimmed to this length      |
+
+NOTE
+Make sure that the above `maxLength` values are not set greater than the values in the [prepareDatabase.sql](src/main/resources/db/prepareDatabase.sql) script.

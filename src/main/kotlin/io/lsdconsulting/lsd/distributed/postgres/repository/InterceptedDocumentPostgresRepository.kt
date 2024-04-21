@@ -17,32 +17,83 @@ private const val INSERT_QUERY =
     "insert into intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 private const val DEFAULT_CONNECTION_TIMEOUT_MILLIS = 500L
+private const val DRIVER_CLASS_NAME = "org.postgresql.Driver"
 
 class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     private var active: Boolean = true
-    private var dataSource: DataSource?
-    private var objectMapper: ObjectMapper
+    private val dataSource: DataSource?
+    private val objectMapper: ObjectMapper
+    private val traceIdMaxLength: Int
+    private val bodyMaxLength: Int
+    private val requestHeadersMaxLength: Int
+    private val responseHeadersMaxLength: Int
+    private val serviceNameMaxLength: Int
+    private val targetMaxLength: Int
+    private val pathMaxLength: Int
+    private val httpStatusMaxLength: Int
+    private val httpMethodMaxLength: Int
+    private val profileMaxLength: Int
 
     constructor(
         dataSource: DataSource,
-        objectMapper: ObjectMapper
+        objectMapper: ObjectMapper,
+        traceIdMaxLength: Int,
+        bodyMaxLength: Int,
+        requestHeadersMaxLength: Int,
+        responseHeadersMaxLength: Int,
+        serviceNameMaxLength: Int,
+        targetMaxLength: Int,
+        pathMaxLength: Int,
+        httpStatusMaxLength: Int,
+        httpMethodMaxLength: Int,
+        profileMaxLength: Int,
     ) {
         this.dataSource = dataSource
         this.objectMapper = objectMapper
+        this.traceIdMaxLength = traceIdMaxLength
+        this.bodyMaxLength = bodyMaxLength
+        this.requestHeadersMaxLength = requestHeadersMaxLength
+        this.responseHeadersMaxLength = responseHeadersMaxLength
+        this.serviceNameMaxLength = serviceNameMaxLength
+        this.targetMaxLength = targetMaxLength
+        this.pathMaxLength = pathMaxLength
+        this.httpStatusMaxLength = httpStatusMaxLength
+        this.httpMethodMaxLength = httpMethodMaxLength
+        this.profileMaxLength = profileMaxLength
     }
 
     constructor(
         dbConnectionString: String,
         objectMapper: ObjectMapper,
         failOnConnectionError: Boolean = false,
-        connectionTimeout: Long = DEFAULT_CONNECTION_TIMEOUT_MILLIS
+        connectionTimeout: Long = DEFAULT_CONNECTION_TIMEOUT_MILLIS,
+        traceIdMaxLength: Int,
+        bodyMaxLength: Int,
+        requestHeadersMaxLength: Int,
+        responseHeadersMaxLength: Int,
+        serviceNameMaxLength: Int,
+        targetMaxLength: Int,
+        pathMaxLength: Int,
+        httpStatusMaxLength: Int,
+        httpMethodMaxLength: Int,
+        profileMaxLength: Int,
     ) {
         val config = HikariConfig()
         config.initializationFailTimeout = connectionTimeout
         config.jdbcUrl = dbConnectionString
-        config.driverClassName = "org.postgresql.Driver"
+        config.driverClassName = DRIVER_CLASS_NAME
         this.dataSource = createDataSource(config, failOnConnectionError)
         this.objectMapper = objectMapper
+        this.traceIdMaxLength = traceIdMaxLength
+        this.bodyMaxLength = bodyMaxLength
+        this.requestHeadersMaxLength = requestHeadersMaxLength
+        this.responseHeadersMaxLength = responseHeadersMaxLength
+        this.serviceNameMaxLength = serviceNameMaxLength
+        this.targetMaxLength = targetMaxLength
+        this.pathMaxLength = pathMaxLength
+        this.httpStatusMaxLength = httpStatusMaxLength
+        this.httpMethodMaxLength = httpMethodMaxLength
+        this.profileMaxLength = profileMaxLength
     }
 
     private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean): DataSource? = try {
@@ -60,17 +111,17 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
             try {
                 dataSource!!.connection.use { con ->
                     con.prepareStatement(INSERT_QUERY).use { pst ->
-                        pst.setString(1, interceptedInteraction.traceId.trimToSize(32))
-                        pst.setString(2, interceptedInteraction.body)
-                        pst.setString(3, objectMapper.writeValueAsString(interceptedInteraction.requestHeaders))
-                        pst.setString(4, objectMapper.writeValueAsString(interceptedInteraction.responseHeaders))
-                        pst.setString(5, interceptedInteraction.serviceName.trimToSize(200)) // TODO Replace with `lsd.core.label.maxWidth` equivalent
-                        pst.setString(6, interceptedInteraction.target.trimToSize(200)) // TODO Replace with `lsd.core.label.maxWidth` equivalent
-                        pst.setString(7, interceptedInteraction.path.trimToSize(200)) // TODO Replace with `lsd.core.label.maxWidth` equivalent
-                        pst.setString(8, interceptedInteraction.httpStatus?.trimToSize(35))
-                        pst.setString(9, interceptedInteraction.httpMethod?.trimToSize(7))
+                        pst.setString(1, interceptedInteraction.traceId.trimToSize(traceIdMaxLength))
+                        pst.setString(2, interceptedInteraction.body?.trimToSize(bodyMaxLength))
+                        pst.setString(3, objectMapper.writeValueAsString(interceptedInteraction.requestHeaders).trimToSize(requestHeadersMaxLength))
+                        pst.setString(4, objectMapper.writeValueAsString(interceptedInteraction.responseHeaders).trimToSize(responseHeadersMaxLength))
+                        pst.setString(5, interceptedInteraction.serviceName.trimToSize(serviceNameMaxLength))
+                        pst.setString(6, interceptedInteraction.target.trimToSize(targetMaxLength))
+                        pst.setString(7, interceptedInteraction.path.trimToSize(pathMaxLength))
+                        pst.setString(8, interceptedInteraction.httpStatus?.trimToSize(httpStatusMaxLength))
+                        pst.setString(9, interceptedInteraction.httpMethod?.trimToSize(httpMethodMaxLength))
                         pst.setString(10, interceptedInteraction.interactionType.name)
-                        pst.setString(11, interceptedInteraction.profile?.trimToSize(20))
+                        pst.setString(11, interceptedInteraction.profile?.trimToSize(profileMaxLength))
                         pst.setLong(12, interceptedInteraction.elapsedTime)
                         pst.setObject(13, interceptedInteraction.createdAt.toOffsetDateTime())
                         pst.executeUpdate()

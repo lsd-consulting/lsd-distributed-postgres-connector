@@ -20,7 +20,31 @@ open class LibraryConfig {
         @Value("\${lsd.dist.connectionString}") dbConnectionString: String,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-    ) = InterceptedDocumentPostgresRepository(dbConnectionString, objectMapper, failOnConnectionError)
+        @Value("\${lsd.dist.db.traceIdMaxLength:#{32}}") traceIdMaxLength: Int,
+        @Value("\${lsd.dist.db.bodyMaxLength:#{10000}}") bodyMaxLength: Int,
+        @Value("\${lsd.dist.db.requestHeadersMaxLength:#{10000}}") requestHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.responseHeadersMaxLength:#{10000}}") responseHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.serviceNameMaxLength:#{200}}") serviceNameMaxLength: Int,
+        @Value("\${lsd.dist.db.targetMaxLength:#{200}}") targetMaxLength: Int,
+        @Value("\${lsd.dist.db.pathMaxLength:#{200}}") pathMaxLength: Int,
+        @Value("\${lsd.dist.db.httpStatusMaxLength:#{35}}") httpStatusMaxLength: Int,
+        @Value("\${lsd.dist.db.httpMethodMaxLength:#{7}}") httpMethodMaxLength: Int,
+        @Value("\${lsd.dist.db.profileMaxLength:#{20}}") profileMaxLength: Int,
+    ) = InterceptedDocumentPostgresRepository(
+        dbConnectionString = dbConnectionString,
+        objectMapper = objectMapper,
+        failOnConnectionError = failOnConnectionError,
+        traceIdMaxLength = traceIdMaxLength,
+        bodyMaxLength = bodyMaxLength,
+        requestHeadersMaxLength = requestHeadersMaxLength,
+        responseHeadersMaxLength = responseHeadersMaxLength,
+        serviceNameMaxLength = serviceNameMaxLength,
+        targetMaxLength = targetMaxLength,
+        pathMaxLength = pathMaxLength,
+        httpStatusMaxLength = httpStatusMaxLength,
+        httpMethodMaxLength = httpMethodMaxLength,
+        profileMaxLength = profileMaxLength,
+    )
 
     @Bean
     @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('dataSource')}")
@@ -29,9 +53,30 @@ open class LibraryConfig {
         dataSource: DataSource,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-    ): InterceptedDocumentPostgresRepository {
-        return InterceptedDocumentPostgresRepository(dataSource, objectMapper)
-    }
+        @Value("\${lsd.dist.db.traceIdMaxLength:#{32}}") traceIdMaxLength: Int,
+        @Value("\${lsd.dist.db.bodyMaxLength:#{10000}}") bodyMaxLength: Int,
+        @Value("\${lsd.dist.db.requestHeadersMaxLength:#{10000}}") requestHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.responseHeadersMaxLength:#{10000}}") responseHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.serviceNameMaxLength:#{200}}") serviceNameMaxLength: Int,
+        @Value("\${lsd.dist.db.targetMaxLength:#{200}}") targetMaxLength: Int,
+        @Value("\${lsd.dist.db.pathMaxLength:#{200}}") pathMaxLength: Int,
+        @Value("\${lsd.dist.db.httpStatusMaxLength:#{35}}") httpStatusMaxLength: Int,
+        @Value("\${lsd.dist.db.httpMethodMaxLength:#{7}}") httpMethodMaxLength: Int,
+        @Value("\${lsd.dist.db.profileMaxLength:#{20}}") profileMaxLength: Int,
+    ) = InterceptedDocumentPostgresRepository(
+        dataSource = dataSource,
+        objectMapper = objectMapper,
+        traceIdMaxLength = traceIdMaxLength,
+        bodyMaxLength = bodyMaxLength,
+        requestHeadersMaxLength = requestHeadersMaxLength,
+        responseHeadersMaxLength = responseHeadersMaxLength,
+        serviceNameMaxLength = serviceNameMaxLength,
+        targetMaxLength = targetMaxLength,
+        pathMaxLength = pathMaxLength,
+        httpStatusMaxLength = httpStatusMaxLength,
+        httpMethodMaxLength = httpMethodMaxLength,
+        profileMaxLength = profileMaxLength,
+    )
 
     @Bean
     @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('jdbc:postgresql://')}")

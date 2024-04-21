@@ -7,8 +7,10 @@ import io.lsdconsulting.lsd.distributed.postgres.repository.InterceptedDocumentP
 import lsd.logging.log
 import org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.*
-import org.junit.jupiter.api.*
+import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`is`
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import java.time.ZoneId
@@ -18,7 +20,7 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import javax.sql.DataSource
 
-@ActiveProfiles("spring-datasource")
+@ActiveProfiles("admin")
 internal class AdminRepositoryIT: BaseIT() {
 
     @Autowired

@@ -11,6 +11,17 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import javax.sql.DataSource
 
+const val DEFAULT_TRACE_ID_MAX_LENGTH = 32
+const val DEFAULT_BODY_MAX_LENGTH = 10000
+const val DEFAULT_REQUEST_HEADERS_MAX_LENGTH = 10000
+const val DEFAULT_RESPONSE_HEADERS_MAX_LENGTH = 10000
+const val DEFAULT_SERVICE_NAME_MAX_LENGTH = 200
+const val DEFAULT_TARGET_MAX_LENGTH = 200
+const val DEFAULT_PATH_MAX_LENGTH = 200
+const val DEFAULT_HTTP_STATUS_MAX_LENGTH = 35
+const val DEFAULT_HTTP_METHOD_MAX_LENGTH = 7
+const val DEFAULT_PROFILE_MAX_LENGTH = 20
+
 @Configuration
 open class LibraryConfig {
 
@@ -20,16 +31,16 @@ open class LibraryConfig {
         @Value("\${lsd.dist.connectionString}") dbConnectionString: String,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-        @Value("\${lsd.dist.db.traceIdMaxLength:#{32}}") traceIdMaxLength: Int,
-        @Value("\${lsd.dist.db.bodyMaxLength:#{10000}}") bodyMaxLength: Int,
-        @Value("\${lsd.dist.db.requestHeadersMaxLength:#{10000}}") requestHeadersMaxLength: Int,
-        @Value("\${lsd.dist.db.responseHeadersMaxLength:#{10000}}") responseHeadersMaxLength: Int,
-        @Value("\${lsd.dist.db.serviceNameMaxLength:#{200}}") serviceNameMaxLength: Int,
-        @Value("\${lsd.dist.db.targetMaxLength:#{200}}") targetMaxLength: Int,
-        @Value("\${lsd.dist.db.pathMaxLength:#{200}}") pathMaxLength: Int,
-        @Value("\${lsd.dist.db.httpStatusMaxLength:#{35}}") httpStatusMaxLength: Int,
-        @Value("\${lsd.dist.db.httpMethodMaxLength:#{7}}") httpMethodMaxLength: Int,
-        @Value("\${lsd.dist.db.profileMaxLength:#{20}}") profileMaxLength: Int,
+        @Value("\${lsd.dist.db.traceIdMaxLength:#{" + DEFAULT_TRACE_ID_MAX_LENGTH + "}}") traceIdMaxLength: Int,
+        @Value("\${lsd.dist.db.bodyMaxLength:#{" + DEFAULT_BODY_MAX_LENGTH + "}}") bodyMaxLength: Int,
+        @Value("\${lsd.dist.db.requestHeadersMaxLength:#{" + DEFAULT_REQUEST_HEADERS_MAX_LENGTH + "}}") requestHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.responseHeadersMaxLength:#{" + DEFAULT_RESPONSE_HEADERS_MAX_LENGTH + "}}") responseHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.serviceNameMaxLength:#{" + DEFAULT_SERVICE_NAME_MAX_LENGTH + "}}") serviceNameMaxLength: Int,
+        @Value("\${lsd.dist.db.targetMaxLength:#{" + DEFAULT_TARGET_MAX_LENGTH + "}}") targetMaxLength: Int,
+        @Value("\${lsd.dist.db.pathMaxLength:#{" + DEFAULT_PATH_MAX_LENGTH + "}}") pathMaxLength: Int,
+        @Value("\${lsd.dist.db.httpStatusMaxLength:#{" + DEFAULT_HTTP_STATUS_MAX_LENGTH + "}}") httpStatusMaxLength: Int,
+        @Value("\${lsd.dist.db.httpMethodMaxLength:#{" + DEFAULT_HTTP_METHOD_MAX_LENGTH + "}}") httpMethodMaxLength: Int,
+        @Value("\${lsd.dist.db.profileMaxLength:#{" + DEFAULT_PROFILE_MAX_LENGTH + "}}") profileMaxLength: Int,
     ) = InterceptedDocumentPostgresRepository(
         dbConnectionString = dbConnectionString,
         objectMapper = objectMapper,
@@ -53,16 +64,16 @@ open class LibraryConfig {
         dataSource: DataSource,
         objectMapper: ObjectMapper,
         @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
-        @Value("\${lsd.dist.db.traceIdMaxLength:#{32}}") traceIdMaxLength: Int,
-        @Value("\${lsd.dist.db.bodyMaxLength:#{10000}}") bodyMaxLength: Int,
-        @Value("\${lsd.dist.db.requestHeadersMaxLength:#{10000}}") requestHeadersMaxLength: Int,
-        @Value("\${lsd.dist.db.responseHeadersMaxLength:#{10000}}") responseHeadersMaxLength: Int,
-        @Value("\${lsd.dist.db.serviceNameMaxLength:#{200}}") serviceNameMaxLength: Int,
-        @Value("\${lsd.dist.db.targetMaxLength:#{200}}") targetMaxLength: Int,
-        @Value("\${lsd.dist.db.pathMaxLength:#{200}}") pathMaxLength: Int,
-        @Value("\${lsd.dist.db.httpStatusMaxLength:#{35}}") httpStatusMaxLength: Int,
-        @Value("\${lsd.dist.db.httpMethodMaxLength:#{7}}") httpMethodMaxLength: Int,
-        @Value("\${lsd.dist.db.profileMaxLength:#{20}}") profileMaxLength: Int,
+        @Value("\${lsd.dist.db.traceIdMaxLength:#{" + DEFAULT_TRACE_ID_MAX_LENGTH + "}}") traceIdMaxLength: Int,
+        @Value("\${lsd.dist.db.bodyMaxLength:#{" + DEFAULT_BODY_MAX_LENGTH + "}}") bodyMaxLength: Int,
+        @Value("\${lsd.dist.db.requestHeadersMaxLength:#{" + DEFAULT_REQUEST_HEADERS_MAX_LENGTH + "}}") requestHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.responseHeadersMaxLength:#{" + DEFAULT_RESPONSE_HEADERS_MAX_LENGTH + "}}") responseHeadersMaxLength: Int,
+        @Value("\${lsd.dist.db.serviceNameMaxLength:#{" + DEFAULT_SERVICE_NAME_MAX_LENGTH + "}}") serviceNameMaxLength: Int,
+        @Value("\${lsd.dist.db.targetMaxLength:#{" + DEFAULT_TARGET_MAX_LENGTH + "}}") targetMaxLength: Int,
+        @Value("\${lsd.dist.db.pathMaxLength:#{" + DEFAULT_PATH_MAX_LENGTH + "}}") pathMaxLength: Int,
+        @Value("\${lsd.dist.db.httpStatusMaxLength:#{" + DEFAULT_HTTP_STATUS_MAX_LENGTH + "}}") httpStatusMaxLength: Int,
+        @Value("\${lsd.dist.db.httpMethodMaxLength:#{" + DEFAULT_HTTP_METHOD_MAX_LENGTH + "}}") httpMethodMaxLength: Int,
+        @Value("\${lsd.dist.db.profileMaxLength:#{" + DEFAULT_PROFILE_MAX_LENGTH + "}}") profileMaxLength: Int,
     ) = InterceptedDocumentPostgresRepository(
         dataSource = dataSource,
         objectMapper = objectMapper,

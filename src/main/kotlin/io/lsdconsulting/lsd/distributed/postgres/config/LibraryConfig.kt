@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import javax.sql.DataSource
 
+const val DEFAULT_FAIL_ON_CONNECTION = true
 const val DEFAULT_TRACE_ID_MAX_LENGTH = 32
 const val DEFAULT_BODY_MAX_LENGTH = 10000
 const val DEFAULT_REQUEST_HEADERS_MAX_LENGTH = 10000
@@ -30,7 +31,7 @@ open class LibraryConfig {
     open fun interceptedDocumentRepositoryFromConnectionString(
         @Value("\${lsd.dist.connectionString}") dbConnectionString: String,
         objectMapper: ObjectMapper,
-        @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
+        @Value("\${lsd.dist.db.failOnConnectionError:#{" + DEFAULT_FAIL_ON_CONNECTION + "}}") failOnConnectionError: Boolean,
         @Value("\${lsd.dist.db.traceIdMaxLength:#{" + DEFAULT_TRACE_ID_MAX_LENGTH + "}}") traceIdMaxLength: Int,
         @Value("\${lsd.dist.db.bodyMaxLength:#{" + DEFAULT_BODY_MAX_LENGTH + "}}") bodyMaxLength: Int,
         @Value("\${lsd.dist.db.requestHeadersMaxLength:#{" + DEFAULT_REQUEST_HEADERS_MAX_LENGTH + "}}") requestHeadersMaxLength: Int,
@@ -63,7 +64,7 @@ open class LibraryConfig {
     open fun interceptedDocumentRepositoryFromDataSource(
         dataSource: DataSource,
         objectMapper: ObjectMapper,
-        @Value("\${lsd.dist.db.failOnConnectionError:#{true}}") failOnConnectionError: Boolean,
+        @Value("\${lsd.dist.db.failOnConnectionError:#{" + DEFAULT_FAIL_ON_CONNECTION + "}}") failOnConnectionError: Boolean,
         @Value("\${lsd.dist.db.traceIdMaxLength:#{" + DEFAULT_TRACE_ID_MAX_LENGTH + "}}") traceIdMaxLength: Int,
         @Value("\${lsd.dist.db.bodyMaxLength:#{" + DEFAULT_BODY_MAX_LENGTH + "}}") bodyMaxLength: Int,
         @Value("\${lsd.dist.db.requestHeadersMaxLength:#{" + DEFAULT_REQUEST_HEADERS_MAX_LENGTH + "}}") requestHeadersMaxLength: Int,

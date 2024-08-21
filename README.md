@@ -62,3 +62,4 @@ The following properties can be overridden by setting a System property.
 
 NOTE
 Make sure that the above `maxLength` values are not set greater than the values in the [prepareDatabase.sql](src/main/resources/db/prepareDatabase.sql) script.
+

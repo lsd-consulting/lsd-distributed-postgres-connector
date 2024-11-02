@@ -11,7 +11,7 @@ import org.postgresql.util.PSQLException
 import javax.sql.DataSource
 
 
-private const val QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT =
+private const val QUERY_BY_TRACE_IDS_LIMIT_100 =
     "select * from intercepted_interactions o where o.trace_id = ANY (?) limit 100"
 private const val INSERT_QUERY =
     "insert into intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
@@ -144,7 +144,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
             try {
                 dataSource!!.connection.use { con ->
-                    val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_SORTED_BY_CREATED_AT)
+                    val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_LIMIT_100)
                     prepareStatement.setArray(1, con.createArrayOf("text", traceId))
                     prepareStatement.use { pst ->
                         pst.executeQuery().use { rs ->
@@ -159,6 +159,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
                 log().error("Failed to retrieve interceptedInteractions - message:${e.message}", e.stackTrace)
             }
             log().trace("findByTraceIds took {} ms", System.currentTimeMillis() - startTime)
+            interceptedInteractions.sortBy { it.createdAt }
             return interceptedInteractions
         }
         return listOf()

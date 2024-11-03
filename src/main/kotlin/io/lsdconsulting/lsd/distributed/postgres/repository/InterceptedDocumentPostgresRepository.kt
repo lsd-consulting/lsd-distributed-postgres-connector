@@ -11,7 +11,7 @@ import org.postgresql.util.PSQLException
 import javax.sql.DataSource
 
 
-private const val QUERY_BY_TRACE_IDS_LIMIT =
+private const val QUERY_BY_TRACE_IDS_WITH_LIMIT =
     "select * from intercepted_interactions o where o.trace_id = ANY (?) limit (?)"
 private const val INSERT_QUERY =
     "insert into intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
@@ -149,7 +149,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
             try {
                 dataSource!!.connection.use { con ->
-                    val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_LIMIT)
+                    val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_WITH_LIMIT)
                     prepareStatement.setArray(1, con.createArrayOf("text", traceId))
                     prepareStatement.setInt(2, maxNumberOfInteractionsToQuery)
                     prepareStatement.use { pst ->

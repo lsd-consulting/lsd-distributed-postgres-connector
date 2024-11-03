@@ -11,8 +11,8 @@ import org.postgresql.util.PSQLException
 import javax.sql.DataSource
 
 
-private const val QUERY_BY_TRACE_IDS_LIMIT_100 =
-    "select * from intercepted_interactions o where o.trace_id = ANY (?) limit 100"
+private const val QUERY_BY_TRACE_IDS_LIMIT =
+    "select * from intercepted_interactions o where o.trace_id = ANY (?) limit (?)"
 private const val INSERT_QUERY =
     "insert into intercepted_interactions (trace_id, body, request_headers, response_headers, service_name, target, path, http_status, http_method, interaction_type, profile, elapsed_time, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
@@ -33,6 +33,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
     private val httpStatusMaxLength: Int
     private val httpMethodMaxLength: Int
     private val profileMaxLength: Int
+    private val maxNumberOfInteractionsToQuery: Int
 
     constructor(
         dataSource: DataSource,
@@ -47,6 +48,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         httpStatusMaxLength: Int,
         httpMethodMaxLength: Int,
         profileMaxLength: Int,
+        maxNumberOfInteractionsToQuery: Int
     ) {
         this.dataSource = dataSource
         this.objectMapper = objectMapper
@@ -60,6 +62,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         this.httpStatusMaxLength = httpStatusMaxLength
         this.httpMethodMaxLength = httpMethodMaxLength
         this.profileMaxLength = profileMaxLength
+        this.maxNumberOfInteractionsToQuery = maxNumberOfInteractionsToQuery
     }
 
     constructor(
@@ -77,6 +80,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         httpStatusMaxLength: Int,
         httpMethodMaxLength: Int,
         profileMaxLength: Int,
+        maxNumberOfInteractionsToQuery: Int,
     ) {
         val config = HikariConfig()
         config.initializationFailTimeout = connectionTimeout
@@ -94,6 +98,7 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
         this.httpStatusMaxLength = httpStatusMaxLength
         this.httpMethodMaxLength = httpMethodMaxLength
         this.profileMaxLength = profileMaxLength
+        this.maxNumberOfInteractionsToQuery = maxNumberOfInteractionsToQuery
     }
 
     private fun createDataSource(config: HikariConfig, failOnConnectionError: Boolean): DataSource? = try {
@@ -144,8 +149,9 @@ class InterceptedDocumentPostgresRepository : InterceptedDocumentRepository {
             val interceptedInteractions: MutableList<InterceptedInteraction> = mutableListOf()
             try {
                 dataSource!!.connection.use { con ->
-                    val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_LIMIT_100)
+                    val prepareStatement = con.prepareStatement(QUERY_BY_TRACE_IDS_LIMIT)
                     prepareStatement.setArray(1, con.createArrayOf("text", traceId))
+                    prepareStatement.setInt(2, maxNumberOfInteractionsToQuery)
                     prepareStatement.use { pst ->
                         pst.executeQuery().use { rs ->
                             while (rs.next()) {

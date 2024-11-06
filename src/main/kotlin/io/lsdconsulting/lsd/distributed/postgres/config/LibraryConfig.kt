@@ -22,6 +22,7 @@ const val DEFAULT_PATH_MAX_LENGTH = 200
 const val DEFAULT_HTTP_STATUS_MAX_LENGTH = 35
 const val DEFAULT_HTTP_METHOD_MAX_LENGTH = 7
 const val DEFAULT_PROFILE_MAX_LENGTH = 20
+const val DEFAULT_MAX_NUMBER_OF_INTERACTIONS_TO_QUERY = 100
 
 @Configuration
 open class LibraryConfig {
@@ -42,6 +43,7 @@ open class LibraryConfig {
         @Value("\${lsd.dist.db.httpStatusMaxLength:#{" + DEFAULT_HTTP_STATUS_MAX_LENGTH + "}}") httpStatusMaxLength: Int,
         @Value("\${lsd.dist.db.httpMethodMaxLength:#{" + DEFAULT_HTTP_METHOD_MAX_LENGTH + "}}") httpMethodMaxLength: Int,
         @Value("\${lsd.dist.db.profileMaxLength:#{" + DEFAULT_PROFILE_MAX_LENGTH + "}}") profileMaxLength: Int,
+        @Value("\${lsd.dist.db.maxNumberOfInteractionsToQuery:#{" + DEFAULT_MAX_NUMBER_OF_INTERACTIONS_TO_QUERY + "}}") maxNumberOfInteractionsToQuery: Int,
     ) = InterceptedDocumentPostgresRepository(
         dbConnectionString = dbConnectionString,
         objectMapper = objectMapper,
@@ -56,6 +58,7 @@ open class LibraryConfig {
         httpStatusMaxLength = httpStatusMaxLength,
         httpMethodMaxLength = httpMethodMaxLength,
         profileMaxLength = profileMaxLength,
+        maxNumberOfInteractionsToQuery = maxNumberOfInteractionsToQuery,
     )
 
     @Bean
@@ -75,6 +78,7 @@ open class LibraryConfig {
         @Value("\${lsd.dist.db.httpStatusMaxLength:#{" + DEFAULT_HTTP_STATUS_MAX_LENGTH + "}}") httpStatusMaxLength: Int,
         @Value("\${lsd.dist.db.httpMethodMaxLength:#{" + DEFAULT_HTTP_METHOD_MAX_LENGTH + "}}") httpMethodMaxLength: Int,
         @Value("\${lsd.dist.db.profileMaxLength:#{" + DEFAULT_PROFILE_MAX_LENGTH + "}}") profileMaxLength: Int,
+        @Value("\${lsd.dist.db.maxNumberOfInteractionsToQuery:#{" + DEFAULT_MAX_NUMBER_OF_INTERACTIONS_TO_QUERY + "}}") maxNumberOfInteractionsToQuery: Int,
     ) = InterceptedDocumentPostgresRepository(
         dataSource = dataSource,
         objectMapper = objectMapper,
@@ -88,6 +92,7 @@ open class LibraryConfig {
         httpStatusMaxLength = httpStatusMaxLength,
         httpMethodMaxLength = httpMethodMaxLength,
         profileMaxLength = profileMaxLength,
+        maxNumberOfInteractionsToQuery = maxNumberOfInteractionsToQuery,
     )
 
     @Bean

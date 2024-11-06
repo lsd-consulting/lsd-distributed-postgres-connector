@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.context.ActiveProfiles
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 @ActiveProfiles("resiliency")
@@ -47,6 +48,7 @@ internal class RepositoryResiliencyIT : BaseIT() {
             httpStatusMaxLength = 35,
             httpMethodMaxLength = 7,
             profileMaxLength = 20,
+            maxNumberOfInteractionsToQuery = 100,
         )
     }
 
@@ -67,6 +69,7 @@ internal class RepositoryResiliencyIT : BaseIT() {
                 httpStatusMaxLength = 35,
                 httpMethodMaxLength = 7,
                 profileMaxLength = 20,
+                maxNumberOfInteractionsToQuery = 100,
             )
         }
     }
@@ -91,6 +94,7 @@ internal class RepositoryResiliencyIT : BaseIT() {
                         httpStatusMaxLength = 35,
                         httpMethodMaxLength = 7,
                         profileMaxLength = 20,
+                        maxNumberOfInteractionsToQuery = 100,
                     ), `is`(
                         notNullValue()
                     )
@@ -113,6 +117,7 @@ internal class RepositoryResiliencyIT : BaseIT() {
             httpStatusMaxLength = 35,
             httpMethodMaxLength = 7,
             profileMaxLength = 20,
+            maxNumberOfInteractionsToQuery = 100,
         )
         val primaryTraceId = randomAlphanumeric(10)
         val interceptedInteraction = buildInterceptedInteraction(primaryTraceId)
@@ -139,6 +144,7 @@ internal class RepositoryResiliencyIT : BaseIT() {
             httpStatusMaxLength = 35,
             httpMethodMaxLength = 7,
             profileMaxLength = 20,
+            maxNumberOfInteractionsToQuery = 100,
         )
         val primaryTraceId = randomAlphanumeric(10)
         val interceptedInteraction = buildInterceptedInteraction(primaryTraceId)
@@ -166,6 +172,7 @@ internal class RepositoryResiliencyIT : BaseIT() {
             httpStatusMaxLength = 35,
             httpMethodMaxLength = 7,
             profileMaxLength = 20,
+            maxNumberOfInteractionsToQuery = 100,
         )
         val primaryTraceId = randomAlphanumeric(10)
         val secondaryTraceId = randomAlphanumeric(10)
@@ -186,5 +193,29 @@ internal class RepositoryResiliencyIT : BaseIT() {
                     `is`(empty())
                 )
             }
+    }
+
+    @Test
+    fun `should not slow down production with large data sets`() {
+        val repository = InterceptedDocumentPostgresRepository(
+            dbConnectionString = dbConnectionString,
+            objectMapper = ObjectMapper(),
+            traceIdMaxLength = 32,
+            bodyMaxLength = 10000,
+            requestHeadersMaxLength = 10000,
+            responseHeadersMaxLength = 10000,
+            serviceNameMaxLength = 200,
+            targetMaxLength = 200,
+            pathMaxLength = 200,
+            httpStatusMaxLength = 35,
+            httpMethodMaxLength = 7,
+            profileMaxLength = 20,
+            maxNumberOfInteractionsToQuery = 100,
+        )
+        val traceId = randomAlphanumeric(10)
+        val interceptedInteraction = List(100_000) { buildInterceptedInteraction(traceId) }
+        interceptedInteraction.forEach(repository::save)
+
+        assertThat(repository.findByTraceIds(traceId), hasSize(100))
     }
 }

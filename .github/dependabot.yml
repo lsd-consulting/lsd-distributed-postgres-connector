@@ -5,6 +5,7 @@ updates:
   # Production dependencies - triggers semantic releases
   - package-ecosystem: "gradle"
     directory: "/"
+    target-branch: "main"
     schedule:
       interval: "daily"
     commit-message:

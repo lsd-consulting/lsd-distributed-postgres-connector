@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   postgres:
-    image: postgres:14
+    image: postgres:18
     container_name: postgres
     healthcheck:
       test: [ "CMD", "pg_isready" ]
@@ -15,7 +15,7 @@ services:
       POSTGRES_PASSWORD: abc123
 
   postgres-db-create:
-    image: postgres:14
+    image: postgres:18
     container_name: postgres-db-create
     command: sh -c '/usr/bin/psql --host postgres --username postgres --no-password --command "CREATE DATABASE lsd_database;"'
     environment:

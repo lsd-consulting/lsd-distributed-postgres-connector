@@ -4,7 +4,7 @@ dependencies {
     implementation 'org.postgresql:postgresql:42.7.9'
 
     // LSD
-    api 'io.github.lsd-consulting:lsd-distributed-connector:2.2.4'
+    api 'io.github.lsd-consulting:lsd-distributed-connector:2.2.5'
     implementation 'io.github.lsd-consulting:lsd-logging-library:2.0.2'
 
     // Spring

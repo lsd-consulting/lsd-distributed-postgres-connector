@@ -11,6 +11,6 @@ dependencies {
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.5.11'
 
     // Other
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.1'
     implementation 'org.slf4j:slf4j-api:2.0.17'
 }

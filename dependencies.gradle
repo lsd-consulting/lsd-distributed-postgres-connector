@@ -12,5 +12,5 @@ dependencies {
 
     // Other
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.2'
-    implementation 'org.slf4j:slf4j-api:2.0.18'
+    implementation 'org.slf4j:slf4j-api:2.0.19'
 }

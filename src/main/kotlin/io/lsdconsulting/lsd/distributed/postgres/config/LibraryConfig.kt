@@ -28,6 +28,11 @@ const val DEFAULT_MAX_NUMBER_OF_INTERACTIONS_TO_QUERY = 100
 open class LibraryConfig {
 
     @Bean
+    @ConditionalOnMissingBean
+    open fun objectMapper(): ObjectMapper = ObjectMapper().findAndRegisterModules()
+
+
+    @Bean
     @ConditionalOnExpression("#{'\${lsd.dist.connectionString:}'.startsWith('jdbc:postgresql://')}")
     open fun interceptedDocumentRepositoryFromConnectionString(
         @Value("\${lsd.dist.connectionString}") dbConnectionString: String,
